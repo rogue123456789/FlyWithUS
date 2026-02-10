@@ -175,14 +175,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const adminRef = useMemoFirebase(() => user ? doc(firestore, 'roles_admin', user.uid) : null, [firestore, user]);
   const openRef = useMemoFirebase(() => user ? doc(firestore, 'roles_open', user.uid) : null, [firestore, user]);
   
-  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminRef);
-  const { data: openRole, isLoading: isOpenLoading } = useDoc(openRef);
+  const { data: adminRoleDoc, isLoading: isAdminLoading } = useDoc(adminRef);
+  const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
-  const userRole = adminRole ? 'admin' : openRole ? 'open' : null;
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(null);
   const isRoleLoading = isAdminLoading || isOpenLoading;
 
   React.useEffect(() => {
-    if (isUserLoading || isRoleLoading) return;
+    if (!isRoleLoading) {
+      if (adminRoleDoc) {
+        setUserRole('admin');
+      } else if (openRoleDoc) {
+        setUserRole('open');
+      } else {
+        setUserRole(null);
+      }
+    }
+  }, [adminRoleDoc, openRoleDoc, isRoleLoading]);
+
+
+  React.useEffect(() => {
+    if (isUserLoading || (user && isRoleLoading)) return;
 
     const isAuthPage = pathname === '/login' || pathname === '/signup';
 
@@ -193,7 +206,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, isRoleLoading, pathname, router]);
 
-  if (isUserLoading || (!user && pathname !== '/login' && pathname !== '/signup')) {
+  const overallLoading = isUserLoading || (user && isRoleLoading);
+
+  if (overallLoading && pathname !== '/login' && pathname !== '/signup') {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -205,7 +220,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isAuthPage) {
     return <>{children}</>;
   }
-
 
   return (
     <SidebarProvider>
