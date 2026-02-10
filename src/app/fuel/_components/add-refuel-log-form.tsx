@@ -30,7 +30,7 @@ const formSchema = z.object({
 });
 
 type AddRefuelLogFormProps = {
-  onFormSubmit: () => void;
+  onFormSubmit: (values: z.infer<typeof formSchema>) => void;
 };
 
 export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
@@ -51,7 +51,7 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
       title: 'Refuel Logged',
       description: `Successfully logged a refuel of ${values.litersRefueled} liters.`,
     });
-    onFormSubmit();
+    onFormSubmit(values);
   }
 
   return (

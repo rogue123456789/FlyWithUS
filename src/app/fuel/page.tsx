@@ -73,11 +73,15 @@ const AddFuelLogDialog = ({
   );
 };
 
-const AddRefuelLogDialog = () => {
+const AddRefuelLogDialog = ({
+  onAddRefuelLog,
+}: {
+  onAddRefuelLog: (values: any) => void;
+}) => {
   const [open, setOpen] = React.useState(false);
 
-  const handleFormSubmit = () => {
-    // The form itself shows the toast and then we close the dialog.
+  const handleFormSubmit = (values: any) => {
+    onAddRefuelLog(values);
     setOpen(false);
   };
 
@@ -129,6 +133,19 @@ export default function FuelPage() {
     setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
   };
 
+  const handleAddRefuelLog = (newRefuelData: any) => {
+    const newLog: FuelLog = {
+      id: `ful${Date.now()}`,
+      date: newRefuelData.date.toISOString(),
+      customerType: 'Refueling',
+      planeId: 'N/A',
+      startQuantity: newRefuelData.litersRefueled,
+      liters: 0,
+      leftOverQuantity: newRefuelData.litersRefueled,
+    };
+    setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
+  };
+
   const handleExport = () => {
     console.log('Exporting fuel data...');
     // In a real app, this would trigger a CSV download.
@@ -150,7 +167,7 @@ export default function FuelPage() {
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <AddRefuelLogDialog />
+            <AddRefuelLogDialog onAddRefuelLog={handleAddRefuelLog} />
             <AddFuelLogDialog onAddFuelLog={handleAddFuelLog} fuelLogs={fuelLogs} />
           </div>
         }
@@ -184,7 +201,11 @@ export default function FuelPage() {
                   <TableCell>
                     <Badge
                       variant={
-                        log.customerType === 'Company' ? 'default' : 'secondary'
+                        log.customerType === 'Company'
+                          ? 'default'
+                          : log.customerType === 'Refueling'
+                          ? 'outline'
+                          : 'secondary'
                       }
                     >
                       {log.customerType}

@@ -26,7 +26,7 @@ export interface FlightLog {
 
 export interface FuelLog {
   id: string;
-  customerType: 'Company' | 'External';
+  customerType: 'Company' | 'External' | 'Refueling';
   planeId?: string;
   startQuantity: number;
   liters: number;
