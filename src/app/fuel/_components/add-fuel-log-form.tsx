@@ -123,7 +123,7 @@ export function AddFuelLogForm({
       form.setValue('startQuantity', 100);
       setIsStartQuantityReadOnly(false);
     }
-  }, [planeId, customerType, aircraftSelection, fuelLogs, form]);
+  }, [planeId, customerType, aircraftSelection, fuelLogs, form.setValue]);
 
   const leftOverQuantity = React.useMemo(() => {
     const start = Number(startQuantity);
@@ -156,7 +156,7 @@ export function AddFuelLogForm({
             <FormItem>
               <FormLabel>Date</FormLabel>
               <FormControl>
-                 <Input
+                <Input
                   type="date"
                   {...field}
                   value={
