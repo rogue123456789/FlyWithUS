@@ -22,19 +22,45 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Plane, FuelLog } from '@/lib/types';
+import type { Plane } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-const formSchema = z.object({
-  customerType: z.enum(['Company', 'External']),
-  planeId: z.string().optional(),
-  gallons: z.coerce.number().min(0.1, { message: 'Gallons must be positive.' }),
-  totalCost: z.coerce.number().min(0.01, { message: 'Cost must be positive.' }),
-});
+const formSchema = z
+  .object({
+    customerType: z.enum(['Company', 'External']),
+    aircraftSelection: z.enum(['existing', 'new']).default('existing'),
+    planeId: z.string().optional(),
+    newPlaneId: z.string().optional(),
+    newPlaneName: z.string().optional(),
+    liters: z.coerce.number().min(0.1, { message: 'Liters must be positive.' }),
+  })
+  .refine(
+    (data) => {
+      if (data.customerType === 'Company') {
+        if (data.aircraftSelection === 'existing') {
+          return !!data.planeId;
+        }
+        if (data.aircraftSelection === 'new') {
+          return (
+            data.newPlaneId &&
+            data.newPlaneId.length > 1 &&
+            data.newPlaneName &&
+            data.newPlaneName.length > 1
+          );
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Please select an aircraft or provide details for a new one.',
+      path: ['aircraftSelection'],
+    }
+  );
 
 type AddFuelLogFormProps = {
   planes: Plane[];
-  onSubmit: (values: Omit<FuelLog, 'id' | 'date'>) => void;
+  onSubmit: (values: z.infer<typeof formSchema>) => void;
 };
 
 export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
@@ -42,19 +68,20 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        customerType: 'Company',
-        gallons: 10,
-        totalCost: 60,
+      customerType: 'Company',
+      liters: 10,
+      aircraftSelection: 'existing',
     },
   });
 
   const customerType = form.watch('customerType');
+  const aircraftSelection = form.watch('aircraftSelection');
 
   function handleFormSubmit(values: z.infer<typeof formSchema>) {
     onSubmit(values);
     toast({
       title: 'Fuel Logged',
-      description: `Successfully logged ${values.gallons} gallons of fuel.`,
+      description: `Successfully logged ${values.liters} liters of fuel.`,
     });
     form.reset();
   }
@@ -83,58 +110,124 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
             </FormItem>
           )}
         />
+        {customerType === 'Company' && (
+          <>
+            <FormField
+              control={form.control}
+              name="aircraftSelection"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel>Aircraft</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex space-x-4"
+                    >
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="existing" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Existing Aircraft
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="new" />
+                        </FormControl>
+                        <FormLabel className="font-normal">New Aircraft</FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {aircraftSelection === 'existing' && (
+              <FormField
+                control={form.control}
+                name="planeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Aircraft</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an aircraft" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {planes.map((plane) => (
+                          <SelectItem key={plane.id} value={plane.id}>
+                            {plane.name} ({plane.id})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {aircraftSelection === 'new' && (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="newPlaneId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Aircraft ID</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. N99999"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="newPlaneName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Aircraft Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. Cessna 152"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+          </>
+        )}
         <FormField
           control={form.control}
-          name="planeId"
+          name="liters"
           render={({ field }) => (
-            <FormItem className={cn(customerType !== 'Company' && 'hidden')}>
-              <FormLabel>Plane</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a plane" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {planes.map((plane) => (
-                    <SelectItem key={plane.id} value={plane.id}>
-                      {plane.name} ({plane.id})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <FormItem>
+              <FormLabel>Liters</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.1" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="gallons"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Gallons</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.1" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="totalCost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Total Cost ($)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
         
         <Button type="submit" className="w-full">Log Fuel</Button>
       </form>

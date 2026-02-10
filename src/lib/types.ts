@@ -28,7 +28,6 @@ export interface FuelLog {
   id: string;
   customerType: 'Company' | 'External';
   planeId?: string;
-  gallons: number;
-  totalCost: number;
+  liters: number;
   date: string;
 }

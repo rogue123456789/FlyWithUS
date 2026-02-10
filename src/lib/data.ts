@@ -24,8 +24,8 @@ export const flightLogs: FlightLog[] = [
 ];
 
 export const fuelLogs: FuelLog[] = [
-  { id: 'ful1', customerType: 'Company', planeId: 'N12345', gallons: 25.5, totalCost: 153.00, date: format(subDays(new Date(), 1), 'yyyy-MM-dd') },
-  { id: 'ful2', customerType: 'External', gallons: 40.0, totalCost: 260.00, date: format(subDays(new Date(), 2), 'yyyy-MM-dd') },
-  { id: 'ful3', customerType: 'Company', planeId: 'N54321', gallons: 18.2, totalCost: 109.20, date: format(subDays(new Date(), 3), 'yyyy-MM-dd') },
-  { id: 'ful4', customerType: 'Company', planeId: 'N09876', gallons: 35.0, totalCost: 210.00, date: format(subDays(new Date(), 4), 'yyyy-MM-dd') },
+  { id: 'ful1', customerType: 'Company', planeId: 'N12345', liters: 25.5, date: format(subDays(new Date(), 1), 'yyyy-MM-dd') },
+  { id: 'ful2', customerType: 'External', liters: 40.0, date: format(subDays(new Date(), 2), 'yyyy-MM-dd') },
+  { id: 'ful3', customerType: 'Company', planeId: 'N54321', liters: 18.2, date: format(subDays(new Date(), 3), 'yyyy-MM-dd') },
+  { id: 'ful4', customerType: 'Company', planeId: 'N09876', liters: 35.0, date: format(subDays(new Date(), 4), 'yyyy-MM-dd') },
 ];
