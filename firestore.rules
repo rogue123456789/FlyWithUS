@@ -168,7 +168,7 @@ service cloud.firestore {
      * @principle Protects privilege escalation by ensuring only admins can manage admin roles. Allows users to check their own status.
      */
     match /roles_admin/{adminUserId} {
-      allow get: if isAdmin() || isOwner(adminUserId);
+      allow get: if isOwner(adminUserId);
       allow list: if isAdmin();
       allow create: if isAdmin();
       allow update: if isAdmin();
@@ -183,7 +183,7 @@ service cloud.firestore {
      * @principle Allows self-service role creation for new users while protecting privilege escalation.
      */
     match /roles_open/{openUserId} {
-      allow get: if isAdmin() || isOwner(openUserId);
+      allow get: if isOwner(openUserId);
       allow list: if isAdmin();
       allow create: if isOwner(openUserId) || isAdmin();
       allow update: if isAdmin();
