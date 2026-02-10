@@ -35,8 +35,10 @@ import { format, parseISO } from 'date-fns';
 
 const AddFuelLogDialog = ({
   onAddFuelLog,
+  fuelLogs,
 }: {
   onAddFuelLog: (values: any) => void;
+  fuelLogs: FuelLog[];
 }) => {
   const [open, setOpen] = React.useState(false);
 
@@ -60,7 +62,11 @@ const AddFuelLogDialog = ({
             Fill in the details for the fuel transaction.
           </DialogDescription>
         </DialogHeader>
-        <AddFuelLogForm planes={planes} onSubmit={handleFormSubmit} />
+        <AddFuelLogForm
+          planes={planes}
+          onSubmit={handleFormSubmit}
+          fuelLogs={fuelLogs}
+        />
       </DialogContent>
     </Dialog>
   );
@@ -98,6 +104,12 @@ export default function FuelPage() {
     // In a real app, this would trigger a CSV download.
   };
 
+  const sortedFuelLogs = React.useMemo(() => {
+    return [...fuelLogs].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [fuelLogs]);
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -108,7 +120,7 @@ export default function FuelPage() {
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <AddFuelLogDialog onAddFuelLog={handleAddFuelLog} />
+            <AddFuelLogDialog onAddFuelLog={handleAddFuelLog} fuelLogs={fuelLogs} />
           </div>
         }
       />
@@ -133,7 +145,7 @@ export default function FuelPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {fuelLogs.map((log: FuelLog) => (
+              {sortedFuelLogs.map((log: FuelLog) => (
                 <TableRow key={log.id}>
                   <TableCell>
                     {format(parseISO(log.date), 'MMM d, yyyy')}

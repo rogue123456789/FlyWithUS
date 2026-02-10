@@ -24,8 +24,8 @@ export const flightLogs: FlightLog[] = [
 ];
 
 export const fuelLogs: FuelLog[] = [
-  { id: 'ful1', customerType: 'Company', planeId: 'N12345', startQuantity: 100, liters: 25.5, leftOverQuantity: 74.5, date: format(subDays(new Date(), 1), 'yyyy-MM-dd') },
+  { id: 'ful1', customerType: 'Company', planeId: 'N12345', startQuantity: 65, liters: 25.5, leftOverQuantity: 39.5, date: format(subDays(new Date(), 1), 'yyyy-MM-dd') },
   { id: 'ful2', customerType: 'External', planeId: undefined, startQuantity: 50, liters: 40.0, leftOverQuantity: 10.0, date: format(subDays(new Date(), 2), 'yyyy-MM-dd') },
-  { id: 'ful3', customerType: 'Company', planeId: 'N54321', startQuantity: 80, liters: 18.2, leftOverQuantity: 61.8, date: format(subDays(new Date(), 3), 'yyyy-MM-dd') },
-  { id: 'ful4', customerType: 'Company', planeId: 'N09876', startQuantity: 120, liters: 35.0, leftOverQuantity: 85.0, date: format(subDays(new Date(), 4), 'yyyy-MM-dd') },
+  { id: 'ful3', customerType: 'Company', planeId: 'N12345', startQuantity: 85, liters: 20, leftOverQuantity: 65, date: format(subDays(new Date(), 3), 'yyyy-MM-dd') },
+  { id: 'ful4', customerType: 'Company', planeId: 'N12345', startQuantity: 120, liters: 35.0, leftOverQuantity: 85.0, date: format(subDays(new Date(), 4), 'yyyy-MM-dd') },
 ];

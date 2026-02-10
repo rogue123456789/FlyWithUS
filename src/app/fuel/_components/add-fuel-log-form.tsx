@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Plane } from '@/lib/types';
+import type { FuelLog, Plane } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
@@ -33,7 +33,9 @@ const formSchema = z
     planeId: z.string().optional(),
     newPlaneId: z.string().optional(),
     newPlaneName: z.string().optional(),
-    startQuantity: z.coerce.number().min(0, { message: 'Start quantity must be a positive number.' }),
+    startQuantity: z.coerce
+      .number()
+      .min(0, { message: 'Start quantity must be a positive number.' }),
     liters: z.coerce.number().min(0.1, { message: 'Liters must be positive.' }),
   })
   .refine((data) => data.startQuantity >= data.liters, {
@@ -65,10 +67,15 @@ const formSchema = z
 
 type AddFuelLogFormProps = {
   planes: Plane[];
+  fuelLogs: FuelLog[];
   onSubmit: (values: z.infer<typeof formSchema>) => void;
 };
 
-export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
+export function AddFuelLogForm({
+  planes,
+  fuelLogs,
+  onSubmit,
+}: AddFuelLogFormProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,6 +91,34 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
   const aircraftSelection = form.watch('aircraftSelection');
   const startQuantity = form.watch('startQuantity');
   const liters = form.watch('liters');
+  const planeId = form.watch('planeId');
+
+  const [isStartQuantityReadOnly, setIsStartQuantityReadOnly] =
+    React.useState(false);
+
+  React.useEffect(() => {
+    if (
+      customerType === 'Company' &&
+      aircraftSelection === 'existing' &&
+      planeId
+    ) {
+      const planeLogs = fuelLogs
+        .filter((log) => log.planeId === planeId)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      if (planeLogs.length > 0) {
+        form.setValue('startQuantity', planeLogs[0].leftOverQuantity);
+        setIsStartQuantityReadOnly(true);
+      } else {
+        form.setValue('startQuantity', 100); // Default for unlogged plane
+        setIsStartQuantityReadOnly(false);
+      }
+    } else {
+      // Reset for "new" aircraft or "external" customer
+      form.setValue('startQuantity', 100);
+      setIsStartQuantityReadOnly(false);
+    }
+  }, [planeId, customerType, aircraftSelection, fuelLogs, form]);
 
   const leftOverQuantity = React.useMemo(() => {
     const start = Number(startQuantity);
@@ -105,7 +140,10 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(handleFormSubmit)}
+        className="space-y-4"
+      >
         <FormField
           control={form.control}
           name="customerType"
@@ -233,32 +271,37 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
           </>
         )}
         <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="startQuantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Quantity</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="liters"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Liters Dispensed</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="startQuantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Quantity</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    {...field}
+                    readOnly={isStartQuantityReadOnly}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="liters"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Liters Dispensed</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.1" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         <FormItem>
           <FormLabel>Left Over Quantity</FormLabel>
@@ -266,8 +309,10 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
             <Input type="number" value={leftOverQuantity} readOnly disabled />
           </FormControl>
         </FormItem>
-        
-        <Button type="submit" className="w-full">Log Fuel</Button>
+
+        <Button type="submit" className="w-full">
+          Log Fuel
+        </Button>
       </form>
     </Form>
   );
