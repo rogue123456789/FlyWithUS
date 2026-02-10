@@ -17,9 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
-  date: z.coerce.date({
-    required_error: 'A date is required.',
-  }),
+  date: z.string().min(1, 'A date is required.'),
   litersRefueled: z.coerce
     .number()
     .min(0.1, { message: 'Liters must be positive.' }),
@@ -35,7 +33,6 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      // @ts-ignore
       date: new Date().toISOString().slice(0, 10),
       litersRefueled: 100,
       cost: 200,
