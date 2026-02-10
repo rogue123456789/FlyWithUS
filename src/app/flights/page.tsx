@@ -57,6 +57,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { downloadCsv } from '@/lib/utils';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const AddFlightLogDialog = ({
   onAddFlightLog,
@@ -126,8 +127,10 @@ const EditFlightLogDialog = ({
 
 export default function FlightsPage() {
   const { toast } = useToast();
-  const [flightLogs, setFlightLogs] =
-    React.useState<FlightLog[]>(initialFlightLogs);
+  const [flightLogs, setFlightLogs] = useLocalStorage<FlightLog[]>(
+    'flightLogs',
+    initialFlightLogs
+  );
   const [logToEdit, setLogToEdit] = React.useState<FlightLog | null>(null);
 
   const handleAddFlightLog = (newLogData: any) => {

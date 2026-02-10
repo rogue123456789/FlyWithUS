@@ -60,6 +60,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { downloadCsv } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const AddFuelLogDialog = ({
   onAddFuelLog,
@@ -167,7 +168,10 @@ const EditFuelLogDialog = ({
 };
 
 export default function FuelPage() {
-  const [fuelLogs, setFuelLogs] = React.useState<FuelLog[]>(initialFuelLogs);
+  const [fuelLogs, setFuelLogs] = useLocalStorage<FuelLog[]>(
+    'fuelLogs',
+    initialFuelLogs
+  );
   const [logToEdit, setLogToEdit] = React.useState<FuelLog | null>(null);
   const { toast } = useToast();
 
@@ -210,7 +214,7 @@ export default function FuelPage() {
 
     const newLog: FuelLog = {
       id: `ful${Date.now()}`,
-      date: newRefuelData.date,
+      date: newRefuelData.date.toString(),
       customerType: 'Refueling',
       planeId: 'N/A',
       startQuantity: currentQuantity,
