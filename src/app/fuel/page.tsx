@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -18,8 +19,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { fuelLogs, planes } from '@/lib/data';
-import type { FuelLog } from '@/lib/types';
+import { fuelLogs as initialFuelLogs, planes } from '@/lib/data';
+import type { FuelLog, Plane } from '@/lib/types';
 import { Download, PlusCircle } from 'lucide-react';
 import { AddFuelLogForm } from './_components/add-fuel-log-form';
 import {
@@ -32,9 +33,20 @@ import {
 } from '@/components/ui/dialog';
 import { format, parseISO } from 'date-fns';
 
-const AddFuelLogDialog = () => {
+const AddFuelLogDialog = ({
+  onAddFuelLog,
+}: {
+  onAddFuelLog: (values: Omit<FuelLog, 'id' | 'date'>) => void;
+}) => {
+  const [open, setOpen] = React.useState(false);
+
+  const handleFormSubmit = (values: Omit<FuelLog, 'id' | 'date'>) => {
+    onAddFuelLog(values);
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -48,15 +60,25 @@ const AddFuelLogDialog = () => {
             Fill in the details for the fuel transaction.
           </DialogDescription>
         </DialogHeader>
-        <AddFuelLogForm planes={planes} />
+        <AddFuelLogForm planes={planes} onSubmit={handleFormSubmit} />
       </DialogContent>
     </Dialog>
   );
 };
 
-
 export default function FuelPage() {
-    const handleExport = () => {
+  const [fuelLogs, setFuelLogs] = React.useState<FuelLog[]>(initialFuelLogs);
+
+  const handleAddFuelLog = (newLogData: Omit<FuelLog, 'id' | 'date'>) => {
+    const newLog: FuelLog = {
+      ...newLogData,
+      id: `ful${Date.now()}`,
+      date: new Date().toISOString(),
+    };
+    setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
+  };
+
+  const handleExport = () => {
     console.log('Exporting fuel data...');
     // In a real app, this would trigger a CSV download.
   };
@@ -71,7 +93,7 @@ export default function FuelPage() {
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <AddFuelLogDialog />
+            <AddFuelLogDialog onAddFuelLog={handleAddFuelLog} />
           </div>
         }
       />
@@ -97,11 +119,17 @@ export default function FuelPage() {
             <TableBody>
               {fuelLogs.map((log: FuelLog) => (
                 <TableRow key={log.id}>
-                   <TableCell>
+                  <TableCell>
                     {format(parseISO(log.date), 'MMM d, yyyy')}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={log.customerType === 'Company' ? 'default' : 'secondary'}>{log.customerType}</Badge>
+                    <Badge
+                      variant={
+                        log.customerType === 'Company' ? 'default' : 'secondary'
+                      }
+                    >
+                      {log.customerType}
+                    </Badge>
                   </TableCell>
                   <TableCell>{log.planeId || 'N/A'}</TableCell>
                   <TableCell>{log.gallons.toFixed(1)}</TableCell>

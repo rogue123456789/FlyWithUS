@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Plane } from '@/lib/types';
+import type { Plane, FuelLog } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
@@ -34,9 +34,10 @@ const formSchema = z.object({
 
 type AddFuelLogFormProps = {
   planes: Plane[];
+  onSubmit: (values: Omit<FuelLog, 'id' | 'date'>) => void;
 };
 
-export function AddFuelLogForm({ planes }: AddFuelLogFormProps) {
+export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,17 +50,18 @@ export function AddFuelLogForm({ planes }: AddFuelLogFormProps) {
 
   const customerType = form.watch('customerType');
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  function handleFormSubmit(values: z.infer<typeof formSchema>) {
+    onSubmit(values);
     toast({
       title: 'Fuel Logged',
       description: `Successfully logged ${values.gallons} gallons of fuel.`,
     });
+    form.reset();
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="customerType"
