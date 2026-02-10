@@ -64,7 +64,7 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Date of Refuel</FormLabel>
-              <Popover modal={false} open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
@@ -83,7 +83,11 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="start"
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                >
                   <Calendar
                     mode="single"
                     selected={field.value}
