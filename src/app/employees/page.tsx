@@ -13,22 +13,44 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { employees } from '@/lib/data';
+import { employees as initialEmployees } from '@/lib/data';
 import type { Employee } from '@/lib/types';
 import { Clock, LogIn, LogOut } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
-function TimeClock() {
-  const [isClockedIn, setIsClockedIn] = React.useState(false);
-  const [clockInTime, setClockInTime] = React.useState<Date | null>(null);
+function TimeClock({
+  employees,
+  onClockIn,
+  onClockOut,
+  selectedEmployeeId,
+  onSelectEmployee,
+}: {
+  employees: Employee[];
+  onClockIn: (employeeId: string) => void;
+  onClockOut: (employeeId: string) => void;
+  selectedEmployeeId: string | null;
+  onSelectEmployee: (employeeId: string) => void;
+}) {
+  const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
 
   const handleClockIn = () => {
-    setIsClockedIn(true);
-    setClockInTime(new Date());
+    if (selectedEmployeeId) {
+      onClockIn(selectedEmployeeId);
+    }
   };
 
   const handleClockOut = () => {
-    setIsClockedIn(false);
-    setClockInTime(null);
+    if (selectedEmployeeId) {
+      onClockOut(selectedEmployeeId);
+    }
   };
 
   return (
@@ -39,24 +61,54 @@ function TimeClock() {
           Time Clock
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {isClockedIn ? (
+      <CardContent className="space-y-4">
+        <Select
+          onValueChange={onSelectEmployee}
+          value={selectedEmployeeId ?? ''}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select an employee" />
+          </SelectTrigger>
+          <SelectContent>
+            {employees.map((employee) => (
+              <SelectItem key={employee.id} value={employee.id}>
+                {employee.name} - {employee.role}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {selectedEmployee && selectedEmployee.status === 'Clocked In' ? (
           <div className="flex items-center justify-between">
-            <p>
-              Clocked in at:{' '}
-              {clockInTime?.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
+            <div>
+              <p>
+                Clocked in at:{' '}
+                {selectedEmployee.lastClockIn &&
+                  new Date(selectedEmployee.lastClockIn).toLocaleTimeString(
+                    [],
+                    {
+                      timeZone: 'America/Costa_Rica',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }
+                  )}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                (Time in Costa Rica)
+              </p>
+            </div>
             <Button variant="destructive" onClick={handleClockOut}>
               <LogOut className="mr-2 h-4 w-4" /> Clock Out
             </Button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <p>You are currently clocked out.</p>
-            <Button onClick={handleClockIn}>
+            <p>
+              {selectedEmployee
+                ? `${selectedEmployee.name} is clocked out.`
+                : 'Please select an employee.'}
+            </p>
+            <Button onClick={handleClockIn} disabled={!selectedEmployeeId}>
               <LogIn className="mr-2 h-4 w-4" /> Clock In
             </Button>
           </div>
@@ -67,11 +119,68 @@ function TimeClock() {
 }
 
 export default function EmployeesPage() {
+  const [employees, setEmployees] = useLocalStorage<Employee[]>(
+    'employees',
+    initialEmployees
+  );
+  const [selectedEmployeeId, setSelectedEmployeeId] = React.useState<
+    string | null
+  >(null);
+  const { toast } = useToast();
+
+  const handleClockIn = (employeeId: string) => {
+    setEmployees((prev) =>
+      prev.map((emp) =>
+        emp.id === employeeId
+          ? {
+              ...emp,
+              status: 'Clocked In',
+              lastClockIn: new Date().toISOString(),
+            }
+          : emp
+      )
+    );
+    const employee = employees.find((e) => e.id === employeeId);
+    if (employee) {
+      toast({
+        title: 'Clocked In',
+        description: `${employee.name} has been clocked in.`,
+      });
+    }
+  };
+
+  const handleClockOut = (employeeId: string) => {
+    setEmployees((prev) =>
+      prev.map((emp) =>
+        emp.id === employeeId
+          ? { ...emp, status: 'Clocked Out', lastClockIn: undefined }
+          : emp
+      )
+    );
+    const employee = employees.find((e) => e.id === employeeId);
+    if (employee) {
+      toast({
+        title: 'Clocked Out',
+        description: `${employee.name} has been clocked out.`,
+      });
+    }
+  };
+
+  const handleSelectEmployee = (employeeId: string) => {
+    setSelectedEmployeeId(employeeId);
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Employees" />
 
-      <TimeClock />
+      <TimeClock
+        employees={employees}
+        onClockIn={handleClockIn}
+        onClockOut={handleClockOut}
+        selectedEmployeeId={selectedEmployeeId}
+        onSelectEmployee={handleSelectEmployee}
+      />
 
       <Card>
         <CardHeader>
