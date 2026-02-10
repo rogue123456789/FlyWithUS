@@ -21,8 +21,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { fuelLogs as initialFuelLogs, planes } from '@/lib/data';
 import type { FuelLog } from '@/lib/types';
-import { Download, PlusCircle } from 'lucide-react';
+import { Download, PlusCircle, Fuel } from 'lucide-react';
 import { AddFuelLogForm } from './_components/add-fuel-log-form';
+import { AddRefuelLogForm } from './_components/add-refuel-log-form';
 import {
   Dialog,
   DialogContent,
@@ -67,6 +68,35 @@ const AddFuelLogDialog = ({
           onSubmit={handleFormSubmit}
           fuelLogs={fuelLogs}
         />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const AddRefuelLogDialog = () => {
+  const [open, setOpen] = React.useState(false);
+
+  const handleFormSubmit = () => {
+    // The form itself shows the toast and then we close the dialog.
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Fuel className="mr-2 h-4 w-4" />
+          Refueling
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Log a New Refuel</DialogTitle>
+          <DialogDescription>
+            Fill in the details for the refueling event.
+          </DialogDescription>
+        </DialogHeader>
+        <AddRefuelLogForm onFormSubmit={handleFormSubmit} />
       </DialogContent>
     </Dialog>
   );
@@ -120,6 +150,7 @@ export default function FuelPage() {
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
+            <AddRefuelLogDialog />
             <AddFuelLogDialog onAddFuelLog={handleAddFuelLog} fuelLogs={fuelLogs} />
           </div>
         }
