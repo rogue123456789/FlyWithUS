@@ -34,3 +34,13 @@ export interface FuelLog {
   date: string;
   cost?: number;
 }
+
+export interface WorkLog {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  clockInTime: string;
+  clockOutTime: string;
+  duration: number; // in milliseconds
+}
