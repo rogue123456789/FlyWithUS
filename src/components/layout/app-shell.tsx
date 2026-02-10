@@ -179,23 +179,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
   const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(null);
-  const isRoleLoading = isAdminLoading || isOpenLoading;
+  
+  const isRoleLoading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
 
   React.useEffect(() => {
-    if (!isRoleLoading) {
-      if (adminRoleDoc) {
-        setUserRole('admin');
-      } else if (openRoleDoc) {
-        setUserRole('open');
-      } else {
-        setUserRole(null);
-      }
+    // Don't run until both hooks have finished loading.
+    if (isAdminLoading || isOpenLoading) return;
+
+    if (adminRoleDoc) {
+      setUserRole('admin');
+    } else if (openRoleDoc) {
+      setUserRole('open');
+    } else {
+      setUserRole(null);
     }
-  }, [adminRoleDoc, openRoleDoc, isRoleLoading]);
+  }, [adminRoleDoc, openRoleDoc, isAdminLoading, isOpenLoading]);
 
 
   React.useEffect(() => {
-    if (isUserLoading || (user && isRoleLoading)) return;
+    if (isUserLoading || (user && (isAdminLoading || isOpenLoading))) return;
 
     const isAuthPage = pathname === '/login' || pathname === '/signup';
 
@@ -204,11 +206,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } else if (user && isAuthPage) {
       router.replace('/');
     }
-  }, [user, isUserLoading, isRoleLoading, pathname, router]);
+  }, [user, isUserLoading, isAdminLoading, isOpenLoading, pathname, router]);
 
-  const overallLoading = isUserLoading || (user && isRoleLoading);
-
-  if (overallLoading && pathname !== '/login' && pathname !== '/signup') {
+  if (isRoleLoading && pathname !== '/login' && pathname !== '/signup') {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
