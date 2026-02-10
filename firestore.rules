@@ -161,14 +161,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages which users have Admin privileges. Only other Admins can read or modify this collection.
+     * @description Manages which users have Admin privileges. Only other Admins can modify this collection. Users can read their own admin status.
      * @path /roles_admin/{adminUserId}
      * @allow (create) An existing Admin adds a new user's UID to grant them admin rights.
      * @deny (list) A non-Admin user tries to list all admins.
-     * @principle Protects privilege escalation by ensuring only admins can manage admin roles.
+     * @principle Protects privilege escalation by ensuring only admins can manage admin roles. Allows users to check their own status.
      */
     match /roles_admin/{adminUserId} {
-      allow get: if isAdmin();
+      allow get: if isAdmin() || isOwner(adminUserId);
       allow list: if isAdmin();
       allow create: if isAdmin();
       allow update: if isAdmin();
