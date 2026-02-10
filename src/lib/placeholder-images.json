@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "cockpit",
+      "description": "View from an airplane cockpit",
+      "imageUrl": "https://images.unsplash.com/photo-1619093202649-37764c2fe43f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhaXJwbGFuZSUyMGNvY2twaXR8ZW58MHx8fHwxNzcwNzEyMjQzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "airplane cockpit"
+    },
+    {
+      "id": "propeller",
+      "description": "Close up of an airplane propeller",
+      "imageUrl": "https://images.unsplash.com/photo-1651997096220-8a49757b3cc1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhaXJwbGFuZSUyMHByb3BlbGxlcnxlbnwwfHx8fDE3NzA3MTIyNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "airplane propeller"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzA3MDUyNjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    }
+  ]
 }
