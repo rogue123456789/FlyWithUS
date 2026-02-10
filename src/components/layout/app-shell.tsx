@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -24,6 +24,8 @@ import {
   Fuel,
   Users,
   ChevronDown,
+  LogOut,
+  LoaderCircle,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import {
@@ -35,27 +37,38 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
-const navItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/flights', label: 'Flights', icon: Plane },
-  { href: '/fuel', label: 'Fuel', icon: Fuel },
-  { href: '/employees', label: 'Employees', icon: Users },
+const allNavItems = [
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['admin', 'open'] },
+  { href: '/flights', label: 'Flights', icon: Plane, role: ['admin', 'open'] },
+  { href: '/fuel', label: 'Fuel', icon: Fuel, role: ['admin', 'open'] },
+  { href: '/employees', label: 'Employees', icon: Users, role: ['admin'] },
 ];
 
 const UserMenu = () => {
+  const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
   const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2">
         <Avatar className="h-8 w-8">
-          {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="Admin" data-ai-hint={userAvatar.imageHint} />}
-          <AvatarFallback>A</AvatarFallback>
+          {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt={user?.email || 'User'} data-ai-hint={userAvatar.imageHint} />}
+          <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col overflow-hidden">
-          <span className="truncate font-medium">Admin User</span>
+          <span className="truncate font-medium">{user?.email}</span>
           <span className="truncate text-xs text-sidebar-foreground/80">
-            admin@skybound.com
+            Authenticated
           </span>
         </div>
         <ChevronDown className="ml-auto h-4 w-4 shrink-0" />
@@ -66,20 +79,32 @@ const UserMenu = () => {
         <DropdownMenuItem>Profile</DropdownMenuItem>
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Log out</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Log out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
 const CollapsedUserMenu = () => {
+  const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
   const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
+  
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Avatar className="h-8 w-8">
-          {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="Admin" data-ai-hint={userAvatar.imageHint} />}
-          <AvatarFallback>A</AvatarFallback>
+          {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt={user?.email || 'User'} data-ai-hint={userAvatar.imageHint} />}
+          <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -88,15 +113,24 @@ const CollapsedUserMenu = () => {
         <DropdownMenuItem>Profile</DropdownMenuItem>
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Log out</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Log out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
-const AppSidebar = () => {
+const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   const pathname = usePathname();
   const { state } = useSidebar();
+
+  const navItems = React.useMemo(() => {
+    if (!userRole) return [];
+    return allNavItems.filter(item => item.role.includes(userRole));
+  }, [userRole]);
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-14">
@@ -133,9 +167,49 @@ const AppSidebar = () => {
 };
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const adminRef = useMemoFirebase(() => user ? doc(firestore, 'roles_admin', user.uid) : null, [firestore, user]);
+  const openRef = useMemoFirebase(() => user ? doc(firestore, 'roles_open', user.uid) : null, [firestore, user]);
+  
+  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminRef);
+  const { data: openRole, isLoading: isOpenLoading } = useDoc(openRef);
+
+  const userRole = adminRole ? 'admin' : openRole ? 'open' : null;
+  const isRoleLoading = isAdminLoading || isOpenLoading;
+
+  React.useEffect(() => {
+    if (isUserLoading || isRoleLoading) return;
+
+    const isAuthPage = pathname === '/login' || pathname === '/signup';
+
+    if (!user && !isAuthPage) {
+      router.replace('/login');
+    } else if (user && isAuthPage) {
+      router.replace('/');
+    }
+  }, [user, isUserLoading, isRoleLoading, pathname, router]);
+
+  if (isUserLoading || (!user && pathname !== '/login' && pathname !== '/signup')) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
+
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar userRole={userRole} />
       <SidebarInset className="p-4 sm:p-6 lg:p-8">
         <header className="mb-4 flex items-center justify-between md:hidden">
             <Link href="/" className="flex items-center gap-2">

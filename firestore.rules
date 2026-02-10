@@ -176,16 +176,16 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages which users have Open User privileges. Only Admins can read or modify this collection.
+     * @description Manages which users have Open User privileges. Only Admins can create new roles, but users can create their own role on signup.
      * @path /roles_open/{openUserId}
-     * @allow (delete) An existing Admin removes a user's UID to revoke their Open User rights.
-     * @deny (create) An Open User tries to add another user to this collection.
-     * @principle Protects privilege escalation by ensuring only admins can manage user roles.
+     * @allow (create) A new user signs up and creates their own 'open' role document.
+     * @deny (create) An existing user tries to create a role for another user.
+     * @principle Allows self-service role creation for new users while protecting privilege escalation.
      */
     match /roles_open/{openUserId} {
-      allow get: if isAdmin();
+      allow get: if isAdmin() || isOwner(openUserId);
       allow list: if isAdmin();
-      allow create: if isAdmin();
+      allow create: if isOwner(openUserId) || isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
