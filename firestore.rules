@@ -1,0 +1,193 @@
+/**
+ * Core Philosophy: This ruleset implements a Role-Based Access Control (RBAC) model combined with user ownership.
+ * There are two primary roles: "Admin" and "Open User". A user's role is determined by the existence of their
+ * UID as a document in the `/roles_admin` or `/roles_open` collections, respectively. Admins have full control
+ * over all data. Open Users have read-only access to public data like aircraft and flight logs. All other
+ * authenticated users (employees) can only manage their own user-specific data.
+ *
+ * Data Structure:
+ * - /users/{userId}/...: Private, user-owned data (e.g., time entries).
+ * - /employees, /aircrafts, /flight_logs, /fuel_records: Top-level collections for business data, managed by Admins.
+ * - /roles_admin, /roles_open: Collections used for role management. The existence of a document grants the role.
+ *
+ * Key Security Decisions:
+ * - Admin Supremacy: Users with the 'Admin' role can read and write all data across the application.
+ * - Open User Read Access: Users with the 'Open User' role are granted read-only access to non-sensitive
+ *   collections like `aircrafts`, `flight_logs`, and `fuel_records`. They cannot view employee PII.
+ * - User Data Ownership: User-specific data (e.g., `/users/{userId}/time_entries`) is strictly owned. Only the
+ *   document owner or an Admin can access it.
+ * - Role Management Security: The role collections (`/roles_admin`, `/roles_open`) can only be modified by
+ *   existing Admins, preventing users from escalating their own privileges.
+ * - Default Deny: Access is implicitly denied unless explicitly granted by a rule.
+ *
+ * Denormalization for Authorization: Roles are managed by the existence of documents in `/roles_admin/{uid}` and
+ * `/roles_open/{uid}`. This allows for fast, efficient role checks using `exists()` without needing to read a user
+ * profile document, simplifying rules and improving performance.
+ *
+ * Structural Segregation: User-specific data (`time_entries`) is segregated under a `/users/{userId}` path,
+ * cleanly separating it from global, admin-managed data. Role documents are also in their own dedicated collections.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions
+    
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    /**
+     * Checks if the authenticated user has the 'Admin' role.
+     * Role is granted if a document with the user's UID exists in the /roles_admin collection.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+    
+    /**
+     * Checks if the authenticated user has the 'Open User' role.
+     * Role is granted if a document with the user's UID exists in the /roles_open collection.
+     */
+    function isOpenUser() {
+      return exists(/databases/$(database)/documents/roles_open/$(request.auth.uid));
+    }
+    
+    /**
+     * Checks if the authenticated user is the owner of a resource, based on a provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    /**
+     * Ensures an incoming document has a field that correctly references its parent's ID.
+     * Used on create operations to enforce relational integrity.
+     */
+    function hasValidOwnerLink(parentDocId, fieldName) {
+      return request.resource.data[fieldName] == parentDocId;
+    }
+
+    /**
+     * Ensures a relational ID field is immutable during an update.
+     */
+    function isOwnerLinkImmutable(fieldName) {
+      return request.resource.data[fieldName] == resource.data[fieldName];
+    }
+    
+    /**
+     * A simple check to ensure a document exists before an update or delete operation.
+     */
+    function isExistingDoc() {
+      return resource != null;
+    }
+
+    /**
+     * @description Manages employee profile data. This collection is for internal use and is fully controlled by Admins.
+     * @path /employees/{employeeId}
+     * @allow (get) An Admin reads an employee's profile. `auth.uid` has an entry in `/roles_admin`.
+     * @deny (create) A non-Admin user tries to add a new employee record.
+     * @principle Enforces strict role-based access for sensitive data management.
+     */
+    match /employees/{employeeId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Manages individual time entries for a user (employee). Access is restricted to the user or an Admin.
+     * @path /users/{userId}/time_entries/{timeEntryId}
+     * @allow (create) An authenticated user (uid: 'user123') creates a time entry under their own path `/users/user123/time_entries`.
+     * @deny (get) A user ('user456') tries to read a time entry from another user's path `/users/user123/time_entries`.
+     * @principle Restricts access to a user's own data tree (Ownership) with an admin override. Validates relational integrity on writes.
+     */
+    match /users/{userId}/time_entries/{timeEntryId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isOwner(userId) || isAdmin();
+      allow create: if (isOwner(userId) || isAdmin()) && hasValidOwnerLink(userId, 'employeeId');
+      allow update: if (isOwner(userId) || isAdmin()) && isExistingDoc() && isOwnerLinkImmutable('employeeId');
+      allow delete: if (isOwner(userId) || isAdmin()) && isExistingDoc();
+    }
+
+    /**
+     * @description Stores information about aircraft. Writable only by Admins, but readable by Admins and Open Users.
+     * @path /aircrafts/{aircraftId}
+     * @allow (list) An Open User lists all available aircraft. `auth.uid` has an entry in `/roles_open`.
+     * @deny (update) An Open User tries to modify an aircraft's maintenance date.
+     * @principle Segregates write permissions to a specific role (Admin) while allowing broader read access.
+     */
+    match /aircrafts/{aircraftId} {
+      allow get: if isAdmin() || isOpenUser();
+      allow list: if isAdmin() || isOpenUser();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Stores flight logs. Writable only by Admins, but readable by Admins and Open Users.
+     * @path /flight_logs/{flightLogId}
+     * @allow (get) An Admin or Open User reads a specific flight log.
+     * @deny (create) A regular authenticated user (who is not an Admin or Open User) tries to create a flight log.
+     * @principle Segregates write permissions to a specific role (Admin) while allowing broader read access.
+     */
+    match /flight_logs/{flightLogId} {
+      allow get: if isAdmin() || isOpenUser();
+      allow list: if isAdmin() || isOpenUser();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Stores fuel consumption records. Writable only by Admins, but readable by Admins and Open Users.
+     * @path /fuel_records/{fuelRecordId}
+     * @allow (list) An Admin or Open User lists all fuel records.
+     * @deny (delete) An Open User tries to delete a fuel record.
+     * @principle Segregates write permissions to a specific role (Admin) while allowing broader read access.
+     */
+    match /fuel_records/{fuelRecordId} {
+      allow get: if isAdmin() || isOpenUser();
+      allow list: if isAdmin() || isOpenUser();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Manages which users have Admin privileges. Only other Admins can read or modify this collection.
+     * @path /roles_admin/{adminUserId}
+     * @allow (create) An existing Admin adds a new user's UID to grant them admin rights.
+     * @deny (list) A non-Admin user tries to list all admins.
+     * @principle Protects privilege escalation by ensuring only admins can manage admin roles.
+     */
+    match /roles_admin/{adminUserId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Manages which users have Open User privileges. Only Admins can read or modify this collection.
+     * @path /roles_open/{openUserId}
+     * @allow (delete) An existing Admin removes a user's UID to revoke their Open User rights.
+     * @deny (create) An Open User tries to add another user to this collection.
+     * @principle Protects privilege escalation by ensuring only admins can manage user roles.
+     */
+    match /roles_open/{openUserId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

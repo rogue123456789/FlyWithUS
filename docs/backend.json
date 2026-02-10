@@ -1,0 +1,369 @@
+{
+  "entities": {
+    "Employee": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Employee",
+      "type": "object",
+      "description": "Represents an employee of the flight school.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Employee entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the employee."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the employee."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the employee (e.g., pilot, instructor, mechanic)."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "The employee's contact phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "The employee's email address.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "role",
+        "email"
+      ]
+    },
+    "TimeEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TimeEntry",
+      "type": "object",
+      "description": "Represents an employee's time entry (check-in/check-out).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TimeEntry entity."
+        },
+        "employeeId": {
+          "type": "string",
+          "description": "Reference to Employee. (Relationship: Employee 1:N TimeEntry)"
+        },
+        "checkInTime": {
+          "type": "string",
+          "description": "The date and time the employee checked in.",
+          "format": "date-time"
+        },
+        "checkOutTime": {
+          "type": "string",
+          "description": "The date and time the employee checked out.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "employeeId",
+        "checkInTime"
+      ]
+    },
+    "Aircraft": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Aircraft",
+      "type": "object",
+      "description": "Represents an aircraft in the flight school's fleet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Aircraft entity."
+        },
+        "tailNumber": {
+          "type": "string",
+          "description": "The tail number of the aircraft."
+        },
+        "make": {
+          "type": "string",
+          "description": "The make of the aircraft (e.g., Cessna)."
+        },
+        "model": {
+          "type": "string",
+          "description": "The model of the aircraft (e.g., 172)."
+        },
+        "lastMaintenanceDate": {
+          "type": "string",
+          "description": "The date of the aircraft's last maintenance.",
+          "format": "date-time"
+        },
+        "hoursSinceLastMaintenance": {
+          "type": "number",
+          "description": "The number of hours flown since the last maintenance."
+        }
+      },
+      "required": [
+        "id",
+        "tailNumber",
+        "make",
+        "model"
+      ]
+    },
+    "FlightLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FlightLog",
+      "type": "object",
+      "description": "Represents a flight log entry.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FlightLog entity."
+        },
+        "pilotId": {
+          "type": "string",
+          "description": "Reference to Employee (pilot). (Relationship: Employee 1:N FlightLog)"
+        },
+        "aircraftId": {
+          "type": "string",
+          "description": "Reference to Aircraft. (Relationship: Aircraft 1:N FlightLog)"
+        },
+        "flightDate": {
+          "type": "string",
+          "description": "The date of the flight.",
+          "format": "date-time"
+        },
+        "flightDuration": {
+          "type": "number",
+          "description": "The duration of the flight in hours."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "The method of payment for the flight."
+        }
+      },
+      "required": [
+        "id",
+        "pilotId",
+        "aircraftId",
+        "flightDate",
+        "flightDuration"
+      ]
+    },
+    "FuelRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FuelRecord",
+      "type": "object",
+      "description": "Represents a record of fuel consumption.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FuelRecord entity."
+        },
+        "aircraftId": {
+          "type": "string",
+          "description": "Reference to Aircraft. (Relationship: Aircraft 1:N FuelRecord)"
+        },
+        "recordDate": {
+          "type": "string",
+          "description": "The date of the fuel record.",
+          "format": "date-time"
+        },
+        "gallonsUsed": {
+          "type": "number",
+          "description": "The number of gallons of fuel used."
+        },
+        "customerType": {
+          "type": "string",
+          "description": "The type of customer (company or external)."
+        }
+      },
+      "required": [
+        "id",
+        "aircraftId",
+        "recordDate",
+        "gallonsUsed",
+        "customerType"
+      ]
+    },
+    "AdminUser": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AdminUser",
+      "type": "object",
+      "description": "Represents an admin user with access to the admin dashboard.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AdminUser entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the admin user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email of the admin user.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email"
+      ]
+    },
+    "OpenUser": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OpenUser",
+      "type": "object",
+      "description": "Represents an open user with limited access.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the OpenUser entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the open user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email of the open user.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/employees/{employeeId}",
+        "definition": {
+          "entityName": "Employee",
+          "schema": {
+            "$ref": "#/backend/entities/Employee"
+          },
+          "description": "Stores employee information. Accessible to admins. Includes all employee details.",
+          "params": [
+            {
+              "name": "employeeId",
+              "description": "The unique identifier of the employee."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/time_entries/{timeEntryId}",
+        "definition": {
+          "entityName": "TimeEntry",
+          "schema": {
+            "$ref": "#/backend/entities/TimeEntry"
+          },
+          "description": "Stores time entries for each employee. Accessible only to the employee and admins.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user/employee."
+            },
+            {
+              "name": "timeEntryId",
+              "description": "The unique identifier of the time entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/aircrafts/{aircraftId}",
+        "definition": {
+          "entityName": "Aircraft",
+          "schema": {
+            "$ref": "#/backend/entities/Aircraft"
+          },
+          "description": "Stores information about each aircraft. Accessible to admins.",
+          "params": [
+            {
+              "name": "aircraftId",
+              "description": "The unique identifier of the aircraft."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/flight_logs/{flightLogId}",
+        "definition": {
+          "entityName": "FlightLog",
+          "schema": {
+            "$ref": "#/backend/entities/FlightLog"
+          },
+          "description": "Stores flight log entries. Accessible to admins.",
+          "params": [
+            {
+              "name": "flightLogId",
+              "description": "The unique identifier of the flight log."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/fuel_records/{fuelRecordId}",
+        "definition": {
+          "entityName": "FuelRecord",
+          "schema": {
+            "$ref": "#/backend/entities/FuelRecord"
+          },
+          "description": "Stores fuel records. Accessible to admins.",
+          "params": [
+            {
+              "name": "fuelRecordId",
+              "description": "The unique identifier of the fuel record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{adminUserId}",
+        "definition": {
+          "entityName": "AdminUser",
+          "schema": {
+            "$ref": "#/backend/entities/AdminUser"
+          },
+          "description": "Indicates that a user is an admin. Existence of a document grants admin privileges.",
+          "params": [
+            {
+              "name": "adminUserId",
+              "description": "The unique identifier of the admin user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_open/{openUserId}",
+        "definition": {
+          "entityName": "OpenUser",
+          "schema": {
+            "$ref": "#/backend/entities/OpenUser"
+          },
+          "description": "Indicates that a user is an open user. Existence of a document grants open user privileges.",
+          "params": [
+            {
+              "name": "openUserId",
+              "description": "The unique identifier of the open user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the Skybound Manager application, focusing on employee time tracking, flight log management, and fuel usage tracking. It incorporates the principles of Authorization Independence, Structural Segregation, and Access Modeling to ensure security, scalability, and debuggability. Specifically, it addresses authorization by using path-based ownership for user-specific data (like TimeEntries) and dedicated collections for admin and open users.  \n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies.  No `get()` calls are required to validate authorization, because ownership is implicitly defined by the path, such as in the `/users/{userId}/time_entries/{timeEntryId}` path. Since there's no hierarchical authorization, this structure will allow atomic operations. \n\nStructural Segregation is implemented by separating admin and open user data into dedicated collections (`/roles_admin/{uid}` and `/roles_open/{uid}`). This ensures that different data types with different access requirements do not reside in the same collection, thus simplifying security rules.\n\nAccess Modeling is achieved by using path-based ownership for resources related to employees (e.g., time entries).  For example, `time_entries` are stored as a subcollection of `users`, enforcing that only the user (or an admin) can access their own time entries. Global roles (admin, open) are handled via the existence of documents in dedicated collections, which simplifies role-based authorization rules.  \n\nThe structure efficiently supports QAPs (Rules are not Filters) by using structural segregation. Listing operations are naturally secured, as each collection has a clear and consistent security posture. For instance, listing time entries under `/users/{userId}/time_entries` will only return entries that belong to the authenticated user, ensuring that rules do not act as filters.\n\nExplicit State Modeling is not directly apparent from the entities, but is recommended to be applied during implementation (e.g., adding a 'status' field to FlightLog to track flight status). Predictable Schema is enforced by adhering to strict naming conventions and avoiding dynamic keys.  Radical Consistency is maintained by standardizing authorization fields and using descriptive wildcards."
+  }
+}
