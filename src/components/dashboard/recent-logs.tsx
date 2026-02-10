@@ -42,7 +42,7 @@ export function RecentLogs({ flightLogs, fuelLogs }: RecentLogsProps) {
             </TableCell>
             <TableCell>
               {log.type === 'Flight'
-                ? `Pilot: ${log.pilotName}, Plane: ${log.planeId}, Duration: ${log.flightDuration}h`
+                ? `Pilot: ${log.pilotName}, Plane: ${log.planeId}, ${log.takeoffLocation} → ${log.landingLocation}, Duration: ${log.flightDuration.toFixed(1)}h`
                 : `Type: ${log.customerType}, Gallons: ${log.gallons}`}
             </TableCell>
             <TableCell className="text-right">

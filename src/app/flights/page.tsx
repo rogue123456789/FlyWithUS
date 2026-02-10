@@ -14,7 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { flightLogs, planes } from '@/lib/data';
 import type { FlightLog } from '@/lib/types';
@@ -36,12 +35,12 @@ const AddFlightLogDialog = () => {
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Log Flight
+          Record flight hours
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Log a New Flight</DialogTitle>
+          <DialogTitle>Record Flight Hours</DialogTitle>
           <DialogDescription>
             Fill in the details below to add a new flight to the log.
           </DialogDescription>
@@ -88,8 +87,10 @@ export default function FlightsPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Pilot</TableHead>
                 <TableHead>Plane</TableHead>
+                <TableHead>From</TableHead>
+                <TableHead>To</TableHead>
                 <TableHead>Duration</TableHead>
-                <TableHead className="text-right">Payment</TableHead>
+                <TableHead className="text-right">Reason</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -100,9 +101,11 @@ export default function FlightsPage() {
                   </TableCell>
                   <TableCell className="font-medium">{log.pilotName}</TableCell>
                   <TableCell>{log.planeId}</TableCell>
+                  <TableCell>{log.takeoffLocation}</TableCell>
+                  <TableCell>{log.landingLocation}</TableCell>
                   <TableCell>{log.flightDuration.toFixed(1)}h</TableCell>
                   <TableCell className="text-right">
-                    <Badge variant="secondary">{log.paymentMethod}</Badge>
+                    {log.flightReason}
                   </TableCell>
                 </TableRow>
               ))}

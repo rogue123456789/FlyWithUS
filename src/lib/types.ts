@@ -17,9 +17,11 @@ export interface FlightLog {
   id: string;
   pilotName: string;
   planeId: string;
+  takeoffLocation: string;
+  landingLocation: string;
   flightDuration: number; // in hours
+  flightReason: string;
   date: string;
-  paymentMethod: 'Cash' | 'Card' | 'Account';
 }
 
 export interface FuelLog {
