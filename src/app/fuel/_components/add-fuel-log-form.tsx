@@ -23,14 +23,11 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { FuelLog, Plane } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const formSchema = z
   .object({
-    date: z.coerce.date({
-      required_error: 'A date is required.',
-    }),
+    date: z.string().min(1, 'A date is required.'),
     customerType: z.enum(['Company', 'External']),
     aircraftSelection: z.enum(['existing', 'new']).default('existing'),
     planeId: z.string().optional(),
@@ -83,7 +80,6 @@ export function AddFuelLogForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      // @ts-ignore
       date: new Date().toISOString().slice(0, 10),
       customerType: 'Company',
       startQuantity: 100,
@@ -96,34 +92,26 @@ export function AddFuelLogForm({
   const aircraftSelection = form.watch('aircraftSelection');
   const startQuantity = form.watch('startQuantity');
   const liters = form.watch('liters');
-  const planeId = form.watch('planeId');
 
   const [isStartQuantityReadOnly, setIsStartQuantityReadOnly] =
     React.useState(false);
 
   React.useEffect(() => {
-    if (
-      customerType === 'Company' &&
-      aircraftSelection === 'existing' &&
-      planeId
-    ) {
-      const planeLogs = fuelLogs
-        .filter((log) => log.planeId === planeId)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Since there is one giant fuel tank, the start quantity is always the
+    // leftover quantity from the last transaction, regardless of the plane.
+    const sortedLogs = [...fuelLogs].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
 
-      if (planeLogs.length > 0) {
-        form.setValue('startQuantity', planeLogs[0].leftOverQuantity);
-        setIsStartQuantityReadOnly(true);
-      } else {
-        form.setValue('startQuantity', 100); // Default for unlogged plane
-        setIsStartQuantityReadOnly(false);
-      }
+    if (sortedLogs.length > 0) {
+      form.setValue('startQuantity', sortedLogs[0].leftOverQuantity);
+      setIsStartQuantityReadOnly(true);
     } else {
-      // Reset for "new" aircraft or "external" customer
+      // For the very first log, allow the user to set the initial quantity.
       form.setValue('startQuantity', 100);
       setIsStartQuantityReadOnly(false);
     }
-  }, [planeId, customerType, aircraftSelection, fuelLogs, form.setValue]);
+  }, [fuelLogs, form.setValue]);
 
   const leftOverQuantity = React.useMemo(() => {
     const start = Number(startQuantity);
@@ -156,15 +144,7 @@ export function AddFuelLogForm({
             <FormItem>
               <FormLabel>Date</FormLabel>
               <FormControl>
-                <Input
-                  type="date"
-                  {...field}
-                  value={
-                    field.value instanceof Date
-                      ? field.value.toISOString().slice(0, 10)
-                      : field.value
-                  }
-                />
+                <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
