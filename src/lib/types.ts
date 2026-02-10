@@ -32,4 +32,5 @@ export interface FuelLog {
   liters: number;
   leftOverQuantity: number;
   date: string;
+  cost?: number;
 }

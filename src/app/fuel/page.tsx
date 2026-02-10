@@ -135,10 +135,14 @@ export default function FuelPage() {
   };
 
   const handleAddRefuelLog = (newRefuelData: any) => {
-    const sortedLogs = [...fuelLogs].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    const sortedLogs = [...fuelLogs].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
+
     const lastLog = sortedLogs[0];
+
     const currentQuantity = lastLog ? lastLog.leftOverQuantity : 0;
     const litersRefueled = Number(newRefuelData.litersRefueled);
 
@@ -150,6 +154,7 @@ export default function FuelPage() {
       startQuantity: currentQuantity,
       liters: litersRefueled,
       leftOverQuantity: currentQuantity + litersRefueled,
+      cost: newRefuelData.cost,
     };
     setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
   };
@@ -162,9 +167,11 @@ export default function FuelPage() {
   };
 
   const sortedFuelLogs = React.useMemo(() => {
-    return [...fuelLogs].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    return [...fuelLogs].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [fuelLogs]);
 
   return (
@@ -206,7 +213,7 @@ export default function FuelPage() {
               {sortedFuelLogs.map((log: FuelLog) => (
                 <TableRow key={log.id}>
                   <TableCell>
-                    {format(parseISO(log.date), 'MMM d, yyyy')}
+                    {format(parseISO(log.date as string), 'MMM d, yyyy')}
                   </TableCell>
                   <TableCell>
                     <Badge

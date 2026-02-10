@@ -40,7 +40,6 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
     // In a real app, this would submit to a server action or API endpoint
     toast({
       title: 'Refuel Logged',
