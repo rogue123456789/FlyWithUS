@@ -21,9 +21,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { fuelLogs as initialFuelLogs, planes } from '@/lib/data';
 import type { FuelLog } from '@/lib/types';
-import { Download, PlusCircle, Fuel } from 'lucide-react';
+import {
+  Download,
+  PlusCircle,
+  Fuel,
+  Trash2,
+  MoreHorizontal,
+  Pencil,
+} from 'lucide-react';
 import { AddFuelLogForm } from './_components/add-fuel-log-form';
 import { AddRefuelLogForm } from './_components/add-refuel-log-form';
+import { EditFuelLogForm } from './_components/edit-fuel-log-form';
 import {
   Dialog,
   DialogContent,
@@ -32,8 +40,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format, parseISO } from 'date-fns';
 import { downloadCsv } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const AddFuelLogDialog = ({
   onAddFuelLog,
@@ -107,8 +133,51 @@ const AddRefuelLogDialog = ({
   );
 };
 
+const EditFuelLogDialog = ({
+  log,
+  onUpdate,
+  onOpenChange,
+}: {
+  log: FuelLog;
+  onUpdate: (values: any) => void;
+  onOpenChange: (open: boolean) => void;
+}) => {
+  const handleFormSubmit = (values: any) => {
+    onUpdate({ ...values, id: log.id });
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={!!log} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Fuel Log</DialogTitle>
+          <DialogDescription>
+            Update the details for this fuel transaction.
+          </DialogDescription>
+        </DialogHeader>
+        <EditFuelLogForm
+          planes={planes}
+          log={log}
+          onSubmit={handleFormSubmit}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default function FuelPage() {
   const [fuelLogs, setFuelLogs] = React.useState<FuelLog[]>(initialFuelLogs);
+  const [logToEdit, setLogToEdit] = React.useState<FuelLog | null>(null);
+  const { toast } = useToast();
+
+  const sortedFuelLogs = React.useMemo(() => {
+    return [...fuelLogs].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [fuelLogs]);
 
   const handleAddFuelLog = (newLogData: any) => {
     let planeId;
@@ -135,14 +204,7 @@ export default function FuelPage() {
   };
 
   const handleAddRefuelLog = (newRefuelData: any) => {
-    const sortedLogs = [...fuelLogs].sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : 0;
-      const dateB = b.date ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
-
-    const lastLog = sortedLogs[0];
-
+    const lastLog = sortedFuelLogs[0];
     const currentQuantity = lastLog ? lastLog.leftOverQuantity : 0;
     const litersRefueled = Number(newRefuelData.litersRefueled);
 
@@ -159,6 +221,44 @@ export default function FuelPage() {
     setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
   };
 
+  const handleUpdateFuelLog = (updatedLogData: any) => {
+    let planeId;
+    if (updatedLogData.customerType === 'Company') {
+      planeId =
+        updatedLogData.aircraftSelection === 'new'
+          ? updatedLogData.newPlaneId
+          : updatedLogData.planeId;
+    }
+
+    const updatedLog: FuelLog = {
+      id: updatedLogData.id,
+      date: updatedLogData.date,
+      customerType: updatedLogData.customerType,
+      planeId: planeId,
+      startQuantity: updatedLogData.startQuantity,
+      liters: updatedLogData.liters,
+      leftOverQuantity: updatedLogData.leftOverQuantity,
+      cost: updatedLogData.cost,
+    };
+
+    setFuelLogs((prevLogs) =>
+      prevLogs.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+    );
+    toast({
+      title: 'Fuel Log Updated',
+      description: 'The transaction has been updated.',
+    });
+    setLogToEdit(null);
+  };
+
+  const handleClearLogs = () => {
+    setFuelLogs([]);
+    toast({
+      title: 'Fuel Logs Cleared',
+      description: 'All fuel logs have been deleted.',
+    });
+  };
+
   const handleExport = () => {
     downloadCsv(
       sortedFuelLogs,
@@ -166,26 +266,44 @@ export default function FuelPage() {
     );
   };
 
-  const sortedFuelLogs = React.useMemo(() => {
-    return [...fuelLogs].sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : 0;
-      const dateB = b.date ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
-  }, [fuelLogs]);
-
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Fuel Logs"
         actions={
           <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Clear Logs
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    all fuel logs.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearLogs}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
             <AddRefuelLogDialog onAddRefuelLog={handleAddRefuelLog} />
-            <AddFuelLogDialog onAddFuelLog={handleAddFuelLog} fuelLogs={fuelLogs} />
+            <AddFuelLogDialog
+              onAddFuelLog={handleAddFuelLog}
+              fuelLogs={sortedFuelLogs}
+            />
           </div>
         }
       />
@@ -204,9 +322,10 @@ export default function FuelPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Plane</TableHead>
-                <TableHead className="text-right">Start (L)</TableHead>
-                <TableHead className="text-right">Dispensed (L)</TableHead>
-                <TableHead className="text-right">Left Over (L)</TableHead>
+                <TableHead>Start (L)</TableHead>
+                <TableHead>Dispensed (L)</TableHead>
+                <TableHead>Left Over (L)</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -229,16 +348,31 @@ export default function FuelPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>{log.planeId || 'N/A'}</TableCell>
-                  <TableCell className="text-right">
-                    {log.startQuantity.toFixed(1)}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>{log.startQuantity.toFixed(1)}</TableCell>
+                  <TableCell
+                    className={
+                      log.customerType === 'Refueling' ? 'text-green-600' : ''
+                    }
+                  >
                     {log.customerType === 'Refueling'
                       ? `+${log.liters.toFixed(1)}`
                       : log.liters.toFixed(1)}
                   </TableCell>
+                  <TableCell>{log.leftOverQuantity.toFixed(1)}</TableCell>
                   <TableCell className="text-right">
-                    {log.leftOverQuantity.toFixed(1)}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -246,6 +380,13 @@ export default function FuelPage() {
           </Table>
         </CardContent>
       </Card>
+      {logToEdit && (
+        <EditFuelLogDialog
+          log={logToEdit}
+          onUpdate={handleUpdateFuelLog}
+          onOpenChange={(open) => !open && setLogToEdit(null)}
+        />
+      )}
     </div>
   );
 }
