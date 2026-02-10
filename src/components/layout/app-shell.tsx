@@ -178,22 +178,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: adminRoleDoc, isLoading: isAdminLoading } = useDoc(adminRef);
   const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
-  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(null);
-  
   const isRoleLoading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
 
-  React.useEffect(() => {
-    // Don't run until both hooks have finished loading.
-    if (isAdminLoading || isOpenLoading) return;
+  const userRole = React.useMemo<'admin' | 'open' | null>(() => {
+    if (isRoleLoading) return null;
 
     if (adminRoleDoc) {
-      setUserRole('admin');
-    } else if (openRoleDoc) {
-      setUserRole('open');
-    } else {
-      setUserRole(null);
+      return 'admin';
     }
-  }, [adminRoleDoc, openRoleDoc, isAdminLoading, isOpenLoading]);
+    if (openRoleDoc) {
+      return 'open';
+    }
+    return null;
+  }, [isRoleLoading, adminRoleDoc, openRoleDoc]);
 
 
   React.useEffect(() => {
