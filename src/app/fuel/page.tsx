@@ -33,6 +33,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { format, parseISO } from 'date-fns';
+import { downloadCsv } from '@/lib/utils';
 
 const AddFuelLogDialog = ({
   onAddFuelLog,
@@ -139,6 +140,7 @@ export default function FuelPage() {
     );
     const lastLog = sortedLogs[0];
     const currentQuantity = lastLog ? lastLog.leftOverQuantity : 0;
+    const litersRefueled = Number(newRefuelData.litersRefueled);
 
     const newLog: FuelLog = {
       id: `ful${Date.now()}`,
@@ -146,15 +148,17 @@ export default function FuelPage() {
       customerType: 'Refueling',
       planeId: 'N/A',
       startQuantity: currentQuantity,
-      liters: newRefuelData.litersRefueled,
-      leftOverQuantity: currentQuantity + newRefuelData.litersRefueled,
+      liters: litersRefueled,
+      leftOverQuantity: currentQuantity + litersRefueled,
     };
     setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
   };
 
   const handleExport = () => {
-    console.log('Exporting fuel data...');
-    // In a real app, this would trigger a CSV download.
+    downloadCsv(
+      sortedFuelLogs,
+      `fuel-logs-${new Date().toISOString().slice(0, 10)}.csv`
+    );
   };
 
   const sortedFuelLogs = React.useMemo(() => {

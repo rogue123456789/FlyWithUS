@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dialog';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { downloadCsv } from '@/lib/utils';
 
 const AddFlightLogDialog = ({
   onAddFlightLog,
@@ -71,11 +72,6 @@ export default function FlightsPage() {
   const [flightLogs, setFlightLogs] =
     React.useState<FlightLog[]>(initialFlightLogs);
 
-  const handleExport = () => {
-    console.log('Exporting flight data...');
-    // In a real app, this would trigger a CSV download.
-  };
-
   const handleAddFlightLog = (newLogData: any) => {
     let planeId;
     if (newLogData.aircraftSelection === 'new') {
@@ -87,7 +83,7 @@ export default function FlightsPage() {
 
     const newLog: FlightLog = {
       id: `fl${Date.now()}`,
-      date: newLogData.date.toISOString().slice(0, 10),
+      date: newLogData.date,
       pilotName: newLogData.pilotName,
       planeId: planeId,
       takeoffLocation: newLogData.takeoffLocation,
@@ -107,6 +103,13 @@ export default function FlightsPage() {
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, [flightLogs]);
+  
+  const handleExport = () => {
+    downloadCsv(
+      sortedFlightLogs,
+      `flight-logs-${new Date().toISOString().slice(0, 10)}.csv`
+    );
+  };
 
   return (
     <div className="flex flex-col gap-8">
