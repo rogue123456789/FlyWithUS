@@ -78,12 +78,17 @@ export default function FuelPage() {
           : newLogData.planeId;
     }
 
+    const start = Number(newLogData.startQuantity);
+    const taken = Number(newLogData.liters);
+
     const newLog: FuelLog = {
       id: `ful${Date.now()}`,
       date: new Date().toISOString(),
       customerType: newLogData.customerType,
       planeId: planeId,
-      liters: newLogData.liters,
+      startQuantity: start,
+      liters: taken,
+      leftOverQuantity: start - taken,
     };
     setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
   };
@@ -122,7 +127,9 @@ export default function FuelPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Plane</TableHead>
-                <TableHead className="text-right">Liters</TableHead>
+                <TableHead className="text-right">Start (L)</TableHead>
+                <TableHead className="text-right">Dispensed (L)</TableHead>
+                <TableHead className="text-right">Left Over (L)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -142,7 +149,13 @@ export default function FuelPage() {
                   </TableCell>
                   <TableCell>{log.planeId || 'N/A'}</TableCell>
                   <TableCell className="text-right">
+                    {log.startQuantity.toFixed(1)}
+                  </TableCell>
+                  <TableCell className="text-right">
                     {log.liters.toFixed(1)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {log.leftOverQuantity.toFixed(1)}
                   </TableCell>
                 </TableRow>
               ))}

@@ -30,7 +30,7 @@ export default function DashboardPage() {
     (sum, log) => sum + log.flightDuration,
     0
   );
-  const totalFuelPumped = fuelLogs.reduce((sum, log) => sum + log.gallons, 0);
+  const totalFuelPumped = fuelLogs.reduce((sum, log) => sum + log.liters, 0);
   const activeEmployees = employees.filter(
     (e) => e.status === 'Clocked In'
   ).length;
@@ -51,7 +51,7 @@ export default function DashboardPage() {
           icon={GaugeCircle}
         />
         <StatsCard
-          title="Fuel Pumped (Gal)"
+          title="Fuel Pumped (Liters)"
           value={totalFuelPumped.toFixed(0)}
           icon={Fuel}
         />

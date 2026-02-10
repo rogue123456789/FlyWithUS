@@ -33,7 +33,12 @@ const formSchema = z
     planeId: z.string().optional(),
     newPlaneId: z.string().optional(),
     newPlaneName: z.string().optional(),
+    startQuantity: z.coerce.number().min(0, { message: 'Start quantity must be a positive number.' }),
     liters: z.coerce.number().min(0.1, { message: 'Liters must be positive.' }),
+  })
+  .refine((data) => data.startQuantity >= data.liters, {
+    message: 'Liters dispensed cannot be more than start quantity.',
+    path: ['liters'],
   })
   .refine(
     (data) => {
@@ -69,6 +74,7 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerType: 'Company',
+      startQuantity: 100,
       liters: 10,
       aircraftSelection: 'existing',
     },
@@ -76,6 +82,17 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
 
   const customerType = form.watch('customerType');
   const aircraftSelection = form.watch('aircraftSelection');
+  const startQuantity = form.watch('startQuantity');
+  const liters = form.watch('liters');
+
+  const leftOverQuantity = React.useMemo(() => {
+    const start = Number(startQuantity);
+    const taken = Number(liters);
+    if (!isNaN(start) && !isNaN(taken) && start >= taken) {
+      return (start - taken).toFixed(1);
+    }
+    return '';
+  }, [startQuantity, liters]);
 
   function handleFormSubmit(values: z.infer<typeof formSchema>) {
     onSubmit(values);
@@ -215,19 +232,40 @@ export function AddFuelLogForm({ planes, onSubmit }: AddFuelLogFormProps) {
             )}
           </>
         )}
-        <FormField
-          control={form.control}
-          name="liters"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Liters</FormLabel>
-              <FormControl>
-                <Input type="number" step="0.1" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="startQuantity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Quantity</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="liters"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Liters Dispensed</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        </div>
+        <FormItem>
+          <FormLabel>Left Over Quantity</FormLabel>
+          <FormControl>
+            <Input type="number" value={leftOverQuantity} readOnly disabled />
+          </FormControl>
+        </FormItem>
         
         <Button type="submit" className="w-full">Log Fuel</Button>
       </form>

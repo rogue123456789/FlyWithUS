@@ -28,6 +28,8 @@ export interface FuelLog {
   id: string;
   customerType: 'Company' | 'External';
   planeId?: string;
+  startQuantity: number;
   liters: number;
+  leftOverQuantity: number;
   date: string;
 }
