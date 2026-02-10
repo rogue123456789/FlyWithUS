@@ -15,10 +15,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar } from '@/components/ui/calendar';
 
 const formSchema = z.object({
-  date: z.date({
+  date: z.coerce.date({
     required_error: 'A date is required.',
   }),
   litersRefueled: z.coerce
@@ -36,7 +35,8 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
+      // @ts-ignore
+      date: new Date().toISOString().slice(0, 10),
       litersRefueled: 100,
       cost: 200,
     },
@@ -59,17 +59,11 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
           control={form.control}
           name="date"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>Date of Refuel</FormLabel>
-              <Calendar
-                mode="single"
-                selected={field.value}
-                onDayClick={field.onChange}
-                disabled={(date) =>
-                  date > new Date() || date < new Date('1900-01-01')
-                }
-                className="rounded-md border"
-              />
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
