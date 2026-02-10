@@ -15,17 +15,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   date: z.date({
     required_error: 'A date is required.',
   }),
-  litersRefueled: z.coerce.number().min(0.1, { message: 'Liters must be positive.' }),
+  litersRefueled: z.coerce
+    .number()
+    .min(0.1, { message: 'Liters must be positive.' }),
   cost: z.coerce.number().min(0.01, { message: 'Cost must be positive.' }),
 });
 
@@ -35,14 +33,13 @@ type AddRefuelLogFormProps = {
 
 export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
   const { toast } = useToast();
-  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        date: new Date(),
-        litersRefueled: 100,
-        cost: 200,
-    }
+      date: new Date(),
+      litersRefueled: 100,
+      cost: 200,
+    },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -64,44 +61,15 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Date of Refuel</FormLabel>
-              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={'outline'}
-                      className={cn(
-                        'w-full pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, 'PPP')
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0"
-                  align="start"
-                  onCloseAutoFocus={(e) => e.preventDefault()}
-                >
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={(date) => {
-                        field.onChange(date);
-                        setIsCalendarOpen(false);
-                    }}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date('1900-01-01')
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Calendar
+                mode="single"
+                selected={field.value}
+                onSelect={field.onChange}
+                disabled={(date) =>
+                  date > new Date() || date < new Date('1900-01-01')
+                }
+                className="rounded-md border"
+              />
               <FormMessage />
             </FormItem>
           )}
@@ -126,7 +94,12 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
             <FormItem>
               <FormLabel>Total Cost</FormLabel>
               <FormControl>
-                <Input type="number" step="0.01" placeholder="e.g. 150.75" {...field} />
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 150.75"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
