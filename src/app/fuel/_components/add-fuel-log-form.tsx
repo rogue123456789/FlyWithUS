@@ -28,6 +28,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const formSchema = z
   .object({
+    date: z.coerce.date({
+      required_error: 'A date is required.',
+    }),
     customerType: z.enum(['Company', 'External']),
     aircraftSelection: z.enum(['existing', 'new']).default('existing'),
     planeId: z.string().optional(),
@@ -80,6 +83,8 @@ export function AddFuelLogForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      // @ts-ignore
+      date: new Date().toISOString().slice(0, 10),
       customerType: 'Company',
       startQuantity: 100,
       liters: 10,
@@ -144,6 +149,27 @@ export function AddFuelLogForm({
         onSubmit={form.handleSubmit(handleFormSubmit)}
         className="space-y-4"
       >
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date</FormLabel>
+              <FormControl>
+                 <Input
+                  type="date"
+                  {...field}
+                  value={
+                    field.value instanceof Date
+                      ? field.value.toISOString().slice(0, 10)
+                      : field.value
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="customerType"

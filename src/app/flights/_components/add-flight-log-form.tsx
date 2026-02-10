@@ -20,13 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import type { Plane } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const formSchema = z
   .object({
+    date: z.coerce.date({
+      required_error: 'A date is required.',
+    }),
     pilotName: z.string().min(2, { message: 'Pilot name is required.' }),
     aircraftSelection: z.enum(['existing', 'new']).default('existing'),
     planeId: z.string().optional(),
@@ -68,13 +70,15 @@ const formSchema = z
 
 type AddFlightLogFormProps = {
   planes: Plane[];
+  onSubmit: (values: z.infer<typeof formSchema>) => void;
 };
 
-export function AddFlightLogForm({ planes }: AddFlightLogFormProps) {
-  const { toast } = useToast();
+export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      // @ts-ignore
+      date: new Date().toISOString().slice(0, 10),
       pilotName: '',
       flightDuration: 0.1,
       takeoffLocation: '',
@@ -86,19 +90,35 @@ export function AddFlightLogForm({ planes }: AddFlightLogFormProps) {
 
   const aircraftSelection = form.watch('aircraftSelection');
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // In a real app, this would submit to a server action or API endpoint
-    toast({
-      title: 'Flight Hours Recorded',
-      description: `Successfully recorded flight for ${values.pilotName}.`,
-    });
-    // Here you would typically also close the dialog
+  function handleFormSubmit(values: z.infer<typeof formSchema>) {
+    onSubmit(values);
+    form.reset();
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  {...field}
+                  value={
+                    field.value instanceof Date
+                      ? field.value.toISOString().slice(0, 10)
+                      : field.value
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="pilotName"

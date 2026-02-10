@@ -93,7 +93,7 @@ const AddRefuelLogDialog = ({
           Refueling
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Log a New Refuel</DialogTitle>
           <DialogDescription>
@@ -123,7 +123,7 @@ export default function FuelPage() {
 
     const newLog: FuelLog = {
       id: `ful${Date.now()}`,
-      date: new Date().toISOString(),
+      date: newLogData.date.toISOString().slice(0, 10),
       customerType: newLogData.customerType,
       planeId: planeId,
       startQuantity: start,
@@ -136,7 +136,7 @@ export default function FuelPage() {
   const handleAddRefuelLog = (newRefuelData: any) => {
     const newLog: FuelLog = {
       id: `ful${Date.now()}`,
-      date: newRefuelData.date.toISOString(),
+      date: newRefuelData.date.toISOString().slice(0, 10),
       customerType: 'Refueling',
       planeId: 'N/A',
       startQuantity: newRefuelData.litersRefueled,
