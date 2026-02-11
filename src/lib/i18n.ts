@@ -36,7 +36,7 @@ export const translations = {
         'Fill in the details below to add a new entry to the logbook.',
       allLogbooksCardDescription: 'A list of all recorded logbook entries.',
       tableDate: 'Date',
-      tableLogbook: 'Logbook ID',
+      tableLogbook: 'Logbook',
       tableFrom: 'From',
       tableTo: 'To',
       tableDuration: 'Duration',
@@ -48,6 +48,15 @@ export const translations = {
       toastAddedTitle: 'Logbook Entry Recorded',
       toastAddedDescription:
         'Successfully recorded new entry for {logbookName}.',
+      export: 'Export',
+      clearAll: 'Clear All Logs',
+      clearDialogTitle: 'Are you absolutely sure?',
+      clearDialogDescription:
+        'This action will permanently delete ALL logbook entries and reset the hour counters on the associated logbooks. This is irreversible.',
+      toastNoLogs: 'No logs to clear.',
+      toastClearingTitle: 'Clearing Logs...',
+      toastClearedTitle: 'All Logbook Entries Cleared',
+      toastClearErrorTitle: 'Error Clearing Logs',
     },
     AddLogbookEntryForm: {
       date: 'Date',
@@ -599,7 +608,7 @@ export const translations = {
       allLogbooksCardDescription:
         'Una lista de todas las entradas de bitácora registradas.',
       tableDate: 'Fecha',
-      tableLogbook: 'ID de Bitácora',
+      tableLogbook: 'Bitácora',
       tableFrom: 'Desde',
       tableTo: 'A',
       tableDuration: 'Duración',
@@ -611,6 +620,15 @@ export const translations = {
       toastAddedTitle: 'Entrada de Bitácora Registrada',
       toastAddedDescription:
         'Nueva entrada para la bitácora {logbookName} registrada con éxito.',
+      export: 'Exportar',
+      clearAll: 'Borrar Todos los Registros',
+      clearDialogTitle: '¿Estás absolutamente seguro?',
+      clearDialogDescription:
+        'Esta acción eliminará permanentemente TODAS las entradas de la bitácora y restablecerá los contadores de horas en las bitácoras asociadas. Esto es irreversible.',
+      toastNoLogs: 'No hay registros para borrar.',
+      toastClearingTitle: 'Borrando registros...',
+      toastClearedTitle: 'Todas las Entradas de Bitácora Borradas',
+      toastClearErrorTitle: 'Error al Borrar los Registros',
     },
     AddLogbookEntryForm: {
       date: 'Fecha',

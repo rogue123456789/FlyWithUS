@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import type { Logbook, LogbookEntry } from '@/lib/types';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Download } from 'lucide-react';
 import { AddLogbookEntryForm } from './_components/add-logbook-entry-form';
 import {
   Dialog,
@@ -29,6 +29,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -36,6 +46,7 @@ import {
   useCollection,
   useMemoFirebase,
   useUser,
+  useDoc,
 } from '@/firebase';
 import {
   collection,
@@ -43,9 +54,11 @@ import {
   addDoc,
   updateDoc,
   increment,
+  writeBatch,
 } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 import { useAuthReady } from '@/context/auth-ready-context';
+import { downloadCsv } from '@/lib/utils';
 
 const AddLogbookEntryDialog = ({
   onAddLogbookEntry,
@@ -92,6 +105,10 @@ export default function LogbookPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const isAuthReady = useAuthReady();
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
+    null
+  );
+  const [isClearDialogOpen, setIsClearDialogOpen] = React.useState(false);
 
   const logbookEntriesCollection = useMemoFirebase(
     () =>
@@ -111,6 +128,29 @@ export default function LogbookPage() {
     [isAuthReady, firestore, user]
   );
   const { data: logbooks } = useCollection<Logbook>(logbooksCollection);
+
+  const adminRef = useMemoFirebase(
+    () =>
+      isAuthReady && user ? doc(firestore, 'roles_admin', user.uid) : null,
+    [isAuthReady, firestore, user]
+  );
+  const { data: adminRoleDoc } = useDoc(adminRef);
+
+  const openRef = useMemoFirebase(
+    () => (isAuthReady && user ? doc(firestore, 'roles_open', user.uid) : null),
+    [isAuthReady, firestore, user]
+  );
+  const { data: openRoleDoc } = useDoc(openRef);
+
+  React.useEffect(() => {
+    if (adminRoleDoc) {
+      setUserRole('admin');
+    } else if (openRoleDoc) {
+      setUserRole('open');
+    } else {
+      setUserRole(null);
+    }
+  }, [adminRoleDoc, openRoleDoc]);
 
   const getLogbookName = React.useCallback(
     (logbookId: string) => {
@@ -189,15 +229,91 @@ export default function LogbookPage() {
     );
   }, [logbookEntries]);
 
+  const handleClearAllLogbookEntries = async () => {
+    if (!firestore || !logbookEntries || logbookEntries.length === 0) {
+      toast({ title: t('LogbookPage.toastNoLogs') });
+      setIsClearDialogOpen(false);
+      return;
+    }
+
+    toast({ title: t('LogbookPage.toastClearingTitle') });
+
+    try {
+      const batch = writeBatch(firestore);
+
+      const hourReductions: { [logbookId: string]: number } = {};
+
+      logbookEntries.forEach((entry) => {
+        if (hourReductions[entry.logbookId]) {
+          hourReductions[entry.logbookId] -= entry.duration;
+        } else {
+          hourReductions[entry.logbookId] = -entry.duration;
+        }
+
+        const entryRef = doc(firestore, 'logbook_entries', entry.id);
+        batch.delete(entryRef);
+      });
+
+      for (const logbookId in hourReductions) {
+        const logbookRef = doc(firestore, 'logbooks', logbookId);
+        batch.update(logbookRef, {
+          totalHours: increment(hourReductions[logbookId]),
+        });
+      }
+
+      await batch.commit();
+
+      toast({ title: t('LogbookPage.toastClearedTitle') });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('LogbookPage.toastClearErrorTitle'),
+        description: error.message,
+      });
+    } finally {
+      setIsClearDialogOpen(false);
+      window.location.reload();
+    }
+  };
+
+  const handleExport = () => {
+    if (!sortedLogbookEntries) return;
+    const dataToExport = sortedLogbookEntries.map((log) => ({
+      ...log,
+      logbookName: getLogbookName(log.logbookId),
+    }));
+    downloadCsv(
+      dataToExport,
+      `logbook-entries-${new Date().toISOString().slice(0, 10)}.csv`
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title={t('Nav.logbook')}
         actions={
-          <AddLogbookEntryDialog
-            onAddLogbookEntry={handleAddLogbookEntry}
-            logbooks={logbooks ?? []}
-          />
+          <div className="flex items-center gap-2">
+            {userRole === 'admin' && (
+              <>
+                <Button variant="outline" onClick={handleExport}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t('LogbookPage.export')}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => setIsClearDialogOpen(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t('LogbookPage.clearAll')}
+                </Button>
+              </>
+            )}
+            <AddLogbookEntryDialog
+              onAddLogbookEntry={handleAddLogbookEntry}
+              logbooks={logbooks ?? []}
+            />
+          </div>
         }
       />
       <Card>
@@ -244,6 +360,27 @@ export default function LogbookPage() {
           </Table>
         </CardContent>
       </Card>
+      <AlertDialog
+        open={isClearDialogOpen}
+        onOpenChange={setIsClearDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('LogbookPage.clearDialogTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('LogbookPage.clearDialogDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('PaymentsPage.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAllLogbookEntries}>
+              {t('AircraftManagement.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
