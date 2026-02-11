@@ -19,16 +19,11 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  fuelLogs as initialFuelLogs,
-  planes as initialPlanes,
-} from '@/lib/data';
 import type { FuelLog, Plane } from '@/lib/types';
 import {
   Download,
   PlusCircle,
   Fuel,
-  Trash2,
   MoreHorizontal,
   Pencil,
 } from 'lucide-react';
@@ -44,17 +39,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -63,7 +47,8 @@ import {
 import { format, parseISO } from 'date-fns';
 import { downloadCsv } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 
 const AddFuelLogDialog = ({
@@ -180,19 +165,26 @@ const EditFuelLogDialog = ({
 };
 
 export default function FuelPage() {
-  const [fuelLogs, setFuelLogs] = useLocalStorage<FuelLog[]>(
-    'fuelLogs',
-    initialFuelLogs
+  const firestore = useFirestore();
+
+  const fuelLogsCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'fuel_records') : null),
+    [firestore]
   );
-  const [planes, setPlanes] = useLocalStorage<Plane[]>(
-    'planes',
-    initialPlanes
+  const { data: fuelLogs } = useCollection<FuelLog>(fuelLogsCollection);
+
+  const planesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'aircrafts') : null),
+    [firestore]
   );
+  const { data: planes } = useCollection<Plane>(planesCollection);
+
   const [logToEdit, setLogToEdit] = React.useState<FuelLog | null>(null);
   const { toast } = useToast();
   const { t } = useI18n();
 
   const sortedFuelLogs = React.useMemo(() => {
+    if (!fuelLogs) return [];
     return [...fuelLogs].sort((a, b) => {
       const dateA = a.date ? new Date(a.date).getTime() : 0;
       const dateB = b.date ? new Date(b.date).getTime() : 0;
@@ -200,95 +192,79 @@ export default function FuelPage() {
     });
   }, [fuelLogs]);
 
-  const handleAddFuelLog = (newLogData: any) => {
-    let planeId;
-    if (newLogData.customerType === 'Company') {
-      if (newLogData.aircraftSelection === 'new') {
-        planeId = newLogData.newPlaneId;
-        const newPlane: Plane = {
-          id: planeId,
-          name: newLogData.newPlaneName,
-          totalHours: 0, // New plane starts with 0 hours
-          nextMaintenanceHours: 100,
-        };
-        setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
-      } else {
-        planeId = newLogData.planeId;
+  const handleAddFuelLog = async (newLogData: any) => {
+    try {
+      let planeId;
+      if (newLogData.customerType === 'Company') {
+        if (newLogData.aircraftSelection === 'new') {
+          planeId = newLogData.newPlaneId;
+          const newPlane: Plane = {
+            name: newLogData.newPlaneName,
+            totalHours: 0,
+            nextMaintenanceHours: 100,
+          };
+          await setDoc(doc(firestore, 'aircrafts', planeId), newPlane);
+        } else {
+          planeId = newLogData.planeId;
+        }
       }
+
+      const start = Number(newLogData.startQuantity);
+      const taken = Number(newLogData.liters);
+
+      const newLog = {
+        date: newLogData.date,
+        customerType: newLogData.customerType,
+        planeId: planeId,
+        startQuantity: start,
+        liters: taken,
+        leftOverQuantity: start - taken,
+      };
+
+      await addDoc(collection(firestore, 'fuel_records'), newLog);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
     }
-
-    const start = Number(newLogData.startQuantity);
-    const taken = Number(newLogData.liters);
-
-    const newLog: FuelLog = {
-      id: `ful${Date.now()}`,
-      date: newLogData.date,
-      customerType: newLogData.customerType,
-      planeId: planeId,
-      startQuantity: start,
-      liters: taken,
-      leftOverQuantity: start - taken,
-    };
-    setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
   };
 
-  const handleAddRefuelLog = (newRefuelData: any) => {
-    const lastLog = sortedFuelLogs[0];
-    const currentQuantity = lastLog ? lastLog.leftOverQuantity : 0;
-    const litersRefueled = Number(newRefuelData.litersRefueled);
+  const handleAddRefuelLog = async (newRefuelData: any) => {
+    try {
+      const lastLog = sortedFuelLogs[0];
+      const currentQuantity = lastLog ? lastLog.leftOverQuantity : 0;
+      const litersRefueled = Number(newRefuelData.litersRefueled);
 
-    const newLog: FuelLog = {
-      id: `ful${Date.now()}`,
-      date: newRefuelData.date.toString(),
-      customerType: 'Refueling',
-      planeId: 'N/A',
-      startQuantity: currentQuantity,
-      liters: litersRefueled,
-      leftOverQuantity: currentQuantity + litersRefueled,
-      cost: newRefuelData.cost,
-    };
-    setFuelLogs((prevLogs) => [newLog, ...prevLogs]);
-  };
-
-  const handleUpdateFuelLog = (updatedLogData: any) => {
-    let planeId;
-    if (updatedLogData.customerType === 'Company') {
-      planeId =
-        updatedLogData.aircraftSelection === 'new'
-          ? updatedLogData.newPlaneId
-          : updatedLogData.planeId;
+      const newLog = {
+        id: `ful${Date.now()}`,
+        date: newRefuelData.date,
+        customerType: 'Refueling',
+        planeId: 'N/A',
+        startQuantity: currentQuantity,
+        liters: litersRefueled,
+        leftOverQuantity: currentQuantity + litersRefueled,
+        cost: newRefuelData.cost,
+      };
+      await addDoc(collection(firestore, 'fuel_records'), newLog);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
     }
-
-    const updatedLog: FuelLog = {
-      id: updatedLogData.id,
-      date: updatedLogData.date,
-      customerType: updatedLogData.customerType,
-      planeId: planeId,
-      startQuantity: updatedLogData.startQuantity,
-      liters: updatedLogData.liters,
-      leftOverQuantity: updatedLogData.leftOverQuantity,
-      cost: updatedLogData.cost,
-    };
-
-    setFuelLogs((prevLogs) =>
-      prevLogs.map((log) => (log.id === updatedLog.id ? updatedLog : log))
-    );
-    toast({
-      title: t('FuelPage.toastUpdatedTitle'),
-      description: t('FuelPage.toastUpdatedDescription'),
-    });
-    setLogToEdit(null);
   };
 
-  const handleClearLogs = () => {
-    setFuelLogs([]);
-    toast({
-      title: t('FuelPage.toastClearedTitle'),
-      description: t('FuelPage.toastClearedDescription'),
-    });
+  const handleUpdateFuelLog = async (updatedLogData: any) => {
+    try {
+      const logRef = doc(firestore, 'fuel_records', updatedLogData.id);
+      await updateDoc(logRef, updatedLogData);
+      toast({
+        title: t('FuelPage.toastUpdatedTitle'),
+        description: t('FuelPage.toastUpdatedDescription'),
+      });
+      setLogToEdit(null);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   };
 
   const handleExport = () => {
+    if (!sortedFuelLogs) return;
     downloadCsv(
       sortedFuelLogs,
       `fuel-logs-${new Date().toISOString().slice(0, 10)}.csv`
@@ -301,30 +277,6 @@ export default function FuelPage() {
         title={t('FuelPage.title')}
         actions={
           <div className="flex items-center gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {t('FuelPage.clearLogs')}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t('FuelPage.clearLogsDialogTitle')}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t('FuelPage.clearLogsDialogDescription')}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t('FuelPage.cancel')}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearLogs}>
-                    {t('FuelPage.continue')}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               {t('FuelPage.export')}
@@ -333,7 +285,7 @@ export default function FuelPage() {
             <AddFuelLogDialog
               onAddFuelLog={handleAddFuelLog}
               fuelLogs={sortedFuelLogs}
-              planes={planes}
+              planes={planes ?? []}
             />
           </div>
         }
@@ -416,7 +368,7 @@ export default function FuelPage() {
       {logToEdit && (
         <EditFuelLogDialog
           log={logToEdit}
-          planes={planes}
+          planes={planes ?? []}
           onUpdate={handleUpdateFuelLog}
           onOpenChange={(open) => !open && setLogToEdit(null)}
         />

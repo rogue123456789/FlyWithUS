@@ -1,12 +1,8 @@
 'use client';
 
+import * as React from 'react';
 import { PageHeader } from '@/components/page-header';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   GaugeCircle,
   Plane,
@@ -15,43 +11,80 @@ import {
   Activity,
   Wrench,
   BarChart,
+  LoaderCircle,
 } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { FlightHoursChart } from '@/components/dashboard/flight-hours-chart';
 import { MaintenanceSchedule } from '@/components/dashboard/maintenance-schedule';
 import { RecentLogs } from '@/components/dashboard/recent-logs';
-import {
-  flightLogs as initialFlightLogs,
-  fuelLogs as initialFuelLogs,
-  employees as initialEmployees,
-  planes as initialPlanes,
-} from '@/lib/data';
 import { useI18n } from '@/context/i18n-context';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import type { FlightLog, FuelLog, Employee, Plane } from '@/lib/types';
 
 export default function DashboardPage() {
   const { t } = useI18n();
+  const firestore = useFirestore();
 
-  const [flightLogs] = useLocalStorage<FlightLog[]>(
-    'flightLogs',
-    initialFlightLogs
+  const flightLogsCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'flight_logs') : null),
+    [firestore]
   );
-  const [fuelLogs] = useLocalStorage<FuelLog[]>('fuelLogs', initialFuelLogs);
-  const [employees] = useLocalStorage<Employee[]>(
-    'employees',
-    initialEmployees
-  );
-  const [planes] = useLocalStorage<Plane[]>('planes', initialPlanes);
+  const { data: flightLogs, isLoading: flightLogsLoading } =
+    useCollection<FlightLog>(flightLogsCollection);
 
-  const totalFlightHours = flightLogs.reduce(
-    (sum, log) => sum + log.flightDuration,
-    0
+  const fuelLogsCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'fuel_records') : null),
+    [firestore]
   );
-  const totalFuelPumped = fuelLogs.reduce((sum, log) => sum + log.liters, 0);
-  const activeEmployees = employees.filter(
-    (e) => e.status === 'Clocked In'
-  ).length;
+  const { data: fuelLogs, isLoading: fuelLogsLoading } =
+    useCollection<FuelLog>(fuelLogsCollection);
+
+  const employeesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'employees') : null),
+    [firestore]
+  );
+  const { data: employees, isLoading: employeesLoading } =
+    useCollection<Employee>(employeesCollection);
+
+  const planesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'aircrafts') : null),
+    [firestore]
+  );
+  const { data: planes, isLoading: planesLoading } =
+    useCollection<Plane>(planesCollection);
+
+  const totalFlightHours = React.useMemo(
+    () => flightLogs?.reduce((sum, log) => sum + log.flightDuration, 0) ?? 0,
+    [flightLogs]
+  );
+
+  const totalFuelPumped = React.useMemo(
+    () =>
+      fuelLogs
+        ?.filter((log) => log.customerType !== 'Refueling')
+        .reduce((sum, log) => sum + log.liters, 0) ?? 0,
+    [fuelLogs]
+  );
+
+  const activeEmployees = React.useMemo(
+    () => employees?.filter((e) => e.status === 'Clocked In').length ?? 0,
+    [employees]
+  );
+
+  const isLoading =
+    flightLogsLoading ||
+    fuelLogsLoading ||
+    employeesLoading ||
+    planesLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -60,7 +93,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title={t('Dashboard.totalFlights')}
-          value={flightLogs.length}
+          value={flightLogs?.length ?? 0}
           icon={Plane}
         />
         <StatsCard
@@ -89,7 +122,7 @@ export default function DashboardPage() {
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <FlightHoursChart data={planes} />
+            <FlightHoursChart data={planes ?? []} />
           </CardContent>
         </Card>
 
@@ -101,7 +134,7 @@ export default function DashboardPage() {
             <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <MaintenanceSchedule data={planes} />
+            <MaintenanceSchedule data={planes ?? []} />
           </CardContent>
         </Card>
       </div>
@@ -114,7 +147,10 @@ export default function DashboardPage() {
           <Activity className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <RecentLogs flightLogs={flightLogs} fuelLogs={fuelLogs} />
+          <RecentLogs
+            flightLogs={flightLogs ?? []}
+            fuelLogs={fuelLogs ?? []}
+          />
         </CardContent>
       </Card>
     </div>

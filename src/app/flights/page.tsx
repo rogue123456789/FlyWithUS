@@ -18,15 +18,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import {
-  flightLogs as initialFlightLogs,
-  planes as initialPlanes,
-} from '@/lib/data';
 import type { FlightLog, Plane } from '@/lib/types';
 import {
   Download,
   PlusCircle,
-  Trash2,
   MoreHorizontal,
   Pencil,
 } from 'lucide-react';
@@ -41,17 +36,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -60,7 +44,15 @@ import {
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { downloadCsv } from '@/lib/utils';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  setDoc,
+  increment,
+} from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 
 const AddFlightLogDialog = ({
@@ -138,114 +130,92 @@ const EditFlightLogDialog = ({
 export default function FlightsPage() {
   const { toast } = useToast();
   const { t } = useI18n();
-  const [flightLogs, setFlightLogs] = useLocalStorage<FlightLog[]>(
-    'flightLogs',
-    initialFlightLogs
+  const firestore = useFirestore();
+
+  const flightLogsCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'flight_logs') : null),
+    [firestore]
   );
-  const [planes, setPlanes] = useLocalStorage<Plane[]>(
-    'planes',
-    initialPlanes
+  const { data: flightLogs } = useCollection<FlightLog>(flightLogsCollection);
+
+  const planesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'aircrafts') : null),
+    [firestore]
   );
+  const { data: planes } = useCollection<Plane>(planesCollection);
+
   const [logToEdit, setLogToEdit] = React.useState<FlightLog | null>(null);
 
-  const handleAddFlightLog = (newLogData: any) => {
-    let planeId;
-    if (newLogData.aircraftSelection === 'new') {
-      planeId = newLogData.newPlaneId;
-      const currentHours = newLogData.currentHourCounter || 0;
-      const newPlane: Plane = {
-        id: planeId,
-        name: newLogData.newPlaneName,
-        totalHours: currentHours + newLogData.flightDuration,
-        nextMaintenanceHours: currentHours + 100, // Default maintenance interval
-        engineCheckHours: newLogData.engineCheckHours,
-        generalCheckHours: newLogData.generalCheckHours,
-      };
-      setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
-    } else {
-      planeId = newLogData.planeId;
-      setPlanes((prevPlanes) =>
-        prevPlanes.map((p) =>
-          p.id === planeId
-            ? { ...p, totalHours: p.totalHours + newLogData.flightDuration }
-            : p
-        )
-      );
-    }
+  const handleAddFlightLog = async (newLogData: any) => {
+    try {
+      let planeId;
+      if (newLogData.aircraftSelection === 'new') {
+        planeId = newLogData.newPlaneId;
+        const currentHours = newLogData.currentHourCounter || 0;
+        const newPlane = {
+          name: newLogData.newPlaneName,
+          totalHours: currentHours + newLogData.flightDuration,
+          nextMaintenanceHours:
+            currentHours + (newLogData.generalCheckHours || 100),
+          engineCheckHours: newLogData.engineCheckHours,
+          generalCheckHours: newLogData.generalCheckHours,
+        };
+        // Using setDoc because the ID (tail number) is known
+        await setDoc(doc(firestore, 'aircrafts', planeId), newPlane);
+      } else {
+        planeId = newLogData.planeId;
+        const planeRef = doc(firestore, 'aircrafts', planeId);
+        await updateDoc(planeRef, {
+          totalHours: increment(newLogData.flightDuration),
+        });
+      }
 
-    const newLog: FlightLog = {
-      id: `fl${Date.now()}`,
-      date: newLogData.date,
-      pilotName: newLogData.pilotName,
-      planeId: planeId,
-      takeoffLocation: newLogData.takeoffLocation,
-      landingLocation: newLogData.landingLocation,
-      flightDuration: newLogData.flightDuration,
-      flightReason: newLogData.flightReason,
-    };
-    setFlightLogs((prevLogs) => [newLog, ...prevLogs]);
-    toast({
-      title: t('FlightsPage.toastAddedTitle'),
-      description: t('FlightsPage.toastAddedDescription', {
+      const newLog = {
+        date: newLogData.date.toISOString(),
         pilotName: newLogData.pilotName,
-      }),
-    });
-  };
-
-  const handleUpdateFlightLog = (updatedLogData: any) => {
-    let planeId;
-    if (updatedLogData.aircraftSelection === 'new') {
-      planeId = updatedLogData.newPlaneId;
-      const currentHours = updatedLogData.currentHourCounter || 0;
-      const newPlane: Plane = {
-        id: planeId,
-        name: updatedLogData.newPlaneName,
-        totalHours: currentHours + updatedLogData.flightDuration,
-        nextMaintenanceHours: currentHours + 100,
-        engineCheckHours: updatedLogData.engineCheckHours,
-        generalCheckHours: updatedLogData.generalCheckHours,
+        planeId: planeId,
+        takeoffLocation: newLogData.takeoffLocation,
+        landingLocation: newLogData.landingLocation,
+        flightDuration: newLogData.flightDuration,
+        flightReason: newLogData.flightReason,
       };
-      setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
-    } else {
-      planeId = updatedLogData.planeId;
+      await addDoc(collection(firestore, 'flight_logs'), newLog);
+
+      toast({
+        title: t('FlightsPage.toastAddedTitle'),
+        description: t('FlightsPage.toastAddedDescription', {
+          pilotName: newLogData.pilotName,
+        }),
+      });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
     }
-
-    const finalLog: FlightLog = {
-      id: updatedLogData.id,
-      date: updatedLogData.date,
-      pilotName: updatedLogData.pilotName,
-      planeId: planeId,
-      takeoffLocation: updatedLogData.takeoffLocation,
-      landingLocation: updatedLogData.landingLocation,
-      flightDuration: updatedLogData.flightDuration,
-      flightReason: updatedLogData.flightReason,
-    };
-
-    setFlightLogs((prevLogs) =>
-      prevLogs.map((log) => (log.id === finalLog.id ? finalLog : log))
-    );
-    toast({
-      title: t('FlightsPage.toastUpdatedTitle'),
-      description: t('FlightsPage.toastUpdatedDescription'),
-    });
-    setLogToEdit(null);
   };
 
-  const handleClearLogs = () => {
-    setFlightLogs([]);
-    toast({
-      title: t('FlightsPage.toastClearedTitle'),
-      description: t('FlightsPage.toastClearedDescription'),
-    });
+  const handleUpdateFlightLog = async (updatedLogData: any) => {
+    try {
+      const logRef = doc(firestore, 'flight_logs', updatedLogData.id);
+      await updateDoc(logRef, updatedLogData);
+
+      toast({
+        title: t('FlightsPage.toastUpdatedTitle'),
+        description: t('FlightsPage.toastUpdatedDescription'),
+      });
+      setLogToEdit(null);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   };
 
   const sortedFlightLogs = React.useMemo(() => {
+    if (!flightLogs) return [];
     return [...flightLogs].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, [flightLogs]);
 
   const handleExport = () => {
+    if (!sortedFlightLogs) return;
     downloadCsv(
       sortedFlightLogs,
       `flight-logs-${new Date().toISOString().slice(0, 10)}.csv`
@@ -258,39 +228,13 @@ export default function FlightsPage() {
         title={t('FlightsPage.title')}
         actions={
           <div className="flex items-center gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {t('FlightsPage.clearLogs')}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t('FlightsPage.clearLogsDialogTitle')}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t('FlightsPage.clearLogsDialogDescription')}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>
-                    {t('FlightsPage.cancel')}
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearLogs}>
-                    {t('FlightsPage.continue')}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               {t('FlightsPage.export')}
             </Button>
             <AddFlightLogDialog
               onAddFlightLog={handleAddFlightLog}
-              planes={planes}
+              planes={planes ?? []}
             />
           </div>
         }
@@ -355,7 +299,7 @@ export default function FlightsPage() {
       {logToEdit && (
         <EditFlightLogDialog
           log={logToEdit}
-          planes={planes}
+          planes={planes ?? []}
           onUpdate={handleUpdateFlightLog}
           onOpenChange={(open) => !open && setLogToEdit(null)}
         />

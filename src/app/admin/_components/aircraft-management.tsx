@@ -29,30 +29,38 @@ import { MoreHorizontal, Trash2 } from 'lucide-react';
 import type { Plane } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
 
 type AircraftManagementProps = {
   planes: Plane[];
-  setPlanes: React.Dispatch<React.SetStateAction<Plane[]>>;
 };
 
-export function AircraftManagement({
-  planes,
-  setPlanes,
-}: AircraftManagementProps) {
+export function AircraftManagement({ planes }: AircraftManagementProps) {
   const { t } = useI18n();
   const { toast } = useToast();
+  const firestore = useFirestore();
   const [planeToDelete, setPlaneToDelete] = React.useState<Plane | null>(null);
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (planeToDelete) {
-      setPlanes((prev) => prev.filter((p) => p.id !== planeToDelete.id));
-      toast({
-        title: t('AircraftManagement.toastDeletedTitle'),
-        description: t('AircraftManagement.toastDeletedDescription', {
-          planeId: planeToDelete.id,
-        }),
-      });
-      window.location.reload();
+      try {
+        await deleteDoc(doc(firestore, 'aircrafts', planeToDelete.id));
+        toast({
+          title: t('AircraftManagement.toastDeletedTitle'),
+          description: t('AircraftManagement.toastDeletedDescription', {
+            planeId: planeToDelete.id,
+          }),
+        });
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message,
+        });
+      } finally {
+        setPlaneToDelete(null);
+      }
     }
   };
 

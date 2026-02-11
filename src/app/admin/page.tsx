@@ -13,11 +13,6 @@ import { UserManagement } from './_components/user-management';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import {
-  planes as initialPlanes,
-  employees as initialEmployees,
-} from '@/lib/data';
 import type { Plane, Employee } from '@/lib/types';
 import { AircraftManagement } from './_components/aircraft-management';
 import { EmployeeManagement } from './_components/employee-management';
@@ -46,14 +41,19 @@ export default function AdminPage() {
     error: openError,
   } = useCollection(openUsersCollection);
 
-  const [planes, setPlanes] = useLocalStorage<Plane[]>(
-    'planes',
-    initialPlanes
+  const planesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'aircrafts') : null),
+    [firestore]
   );
-  const [employees, setEmployees] = useLocalStorage<Employee[]>(
-    'employees',
-    initialEmployees
+  const { data: planes, isLoading: planesLoading } =
+    useCollection<Plane>(planesCollection);
+
+  const employeesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'employees') : null),
+    [firestore]
   );
+  const { data: employees, isLoading: employeesLoading } =
+    useCollection<Employee>(employeesCollection);
 
   const allUsers = React.useMemo(() => {
     const usersMap = new Map();
@@ -75,7 +75,8 @@ export default function AdminPage() {
     return Array.from(usersMap.values());
   }, [adminUsers, openUsers]);
 
-  const isLoading = isAdminLoading || isOpenLoading;
+  const isLoading =
+    isAdminLoading || isOpenLoading || planesLoading || employeesLoading;
   const error = adminError || openError;
 
   return (
@@ -108,7 +109,7 @@ export default function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <EmployeeManagement employees={employees} setEmployees={setEmployees} />
+          <EmployeeManagement employees={employees ?? []} />
         </CardContent>
       </Card>
 
@@ -120,7 +121,7 @@ export default function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AircraftManagement planes={planes} setPlanes={setPlanes} />
+          <AircraftManagement planes={planes ?? []} />
         </CardContent>
       </Card>
     </div>

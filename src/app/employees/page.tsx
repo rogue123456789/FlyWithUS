@@ -18,21 +18,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  employees as initialEmployees,
-  workLogs as initialWorkLogs,
-} from '@/lib/data';
 import type { Employee, WorkLog } from '@/lib/types';
 import {
   Clock,
   LogIn,
   LogOut,
-  Trash2,
   Download,
   MoreHorizontal,
   Pencil,
 } from 'lucide-react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import {
+  collection,
+  doc,
+  updateDoc,
+  addDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import {
   Select,
   SelectContent,
@@ -40,17 +42,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,14 +97,20 @@ function LiveTimer({ startTime }: { startTime: string }) {
 }
 
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useLocalStorage<Employee[]>(
-    'employees',
-    initialEmployees
+  const firestore = useFirestore();
+
+  const employeesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'employees') : null),
+    [firestore]
   );
-  const [workLogs, setWorkLogs] = useLocalStorage<WorkLog[]>(
-    'workLogs',
-    initialWorkLogs
+  const { data: employees } = useCollection<Employee>(employeesCollection);
+
+  const workLogsCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'work_logs') : null),
+    [firestore]
   );
+  const { data: workLogs } = useCollection<WorkLog>(workLogsCollection);
+
   const [selectedEmployeeId, setSelectedEmployeeId] = React.useState<
     string | null
   >(null);
@@ -121,41 +118,38 @@ export default function EmployeesPage() {
   const { toast } = useToast();
   const { t } = useI18n();
 
-  const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
+  const selectedEmployee = employees?.find((e) => e.id === selectedEmployeeId);
 
-  const handleClockIn = (employeeId: string) => {
-    setEmployees((prev) =>
-      prev.map((emp) =>
-        emp.id === employeeId
-          ? {
-              ...emp,
-              status: 'Clocked In',
-              lastClockIn: new Date().toISOString(),
-            }
-          : emp
-      )
-    );
-    const employee = employees.find((e) => e.id === employeeId);
-    if (employee) {
-      toast({
-        title: t('EmployeesPage.toastClockInTitle'),
-        description: t('EmployeesPage.toastClockInDescription', {
-          name: employee.name,
-        }),
+  const handleClockIn = async (employeeId: string) => {
+    const employeeRef = doc(firestore, 'employees', employeeId);
+    try {
+      await updateDoc(employeeRef, {
+        status: 'Clocked In',
+        lastClockIn: new Date().toISOString(),
       });
+      const employee = employees?.find((e) => e.id === employeeId);
+      if (employee) {
+        toast({
+          title: t('EmployeesPage.toastClockInTitle'),
+          description: t('EmployeesPage.toastClockInDescription', {
+            name: employee.name,
+          }),
+        });
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
     }
   };
 
-  const handleClockOut = (employeeId: string) => {
-    const employee = employees.find((e) => e.id === employeeId);
+  const handleClockOut = async (employeeId: string) => {
+    const employee = employees?.find((e) => e.id === employeeId);
     if (!employee || !employee.lastClockIn) return;
 
     const clockInTime = parseISO(employee.lastClockIn);
     const clockOutTime = new Date();
     const duration = differenceInMilliseconds(clockOutTime, clockInTime);
 
-    const newWorkLog: WorkLog = {
-      id: `wl${Date.now()}`,
+    const newWorkLog = {
       employeeId: employee.id,
       employeeName: employee.name,
       date: clockInTime.toISOString(),
@@ -164,32 +158,29 @@ export default function EmployeesPage() {
       duration,
     };
 
-    setWorkLogs((prev) => [newWorkLog, ...prev]);
-    setEmployees((prev) =>
-      prev.map((emp) =>
-        emp.id === employeeId
-          ? { ...emp, status: 'Clocked Out', lastClockIn: undefined }
-          : emp
-      )
-    );
-    toast({
-      title: t('EmployeesPage.toastClockOutTitle'),
-      description: t('EmployeesPage.toastClockOutDescription', {
-        name: employee.name,
-        duration: formatDuration(duration),
-      }),
-    });
-  };
+    const employeeRef = doc(firestore, 'employees', employeeId);
+    const workLogsCol = collection(firestore, 'work_logs');
 
-  const handleClearLogs = () => {
-    setWorkLogs([]);
-    toast({
-      title: t('EmployeesPage.toastClearedTitle'),
-      description: t('EmployeesPage.toastClearedDescription'),
-    });
+    try {
+      await addDoc(workLogsCol, newWorkLog);
+      await updateDoc(employeeRef, {
+        status: 'Clocked Out',
+        lastClockIn: null,
+      });
+      toast({
+        title: t('EmployeesPage.toastClockOutTitle'),
+        description: t('EmployeesPage.toastClockOutDescription', {
+          name: employee.name,
+          duration: formatDuration(duration),
+        }),
+      });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   };
 
   const handleExport = () => {
+    if (!sortedWorkLogs) return;
     const dataToExport = sortedWorkLogs.map((log) => ({
       'Employee Name': log.employeeName,
       Date: new Date(log.date).toLocaleDateString('en-US', {
@@ -219,12 +210,13 @@ export default function EmployeesPage() {
   };
 
   const sortedWorkLogs = React.useMemo(() => {
+    if (!workLogs) return [];
     return [...workLogs].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, [workLogs]);
 
-  const handleUpdateWorkLog = (values: {
+  const handleUpdateWorkLog = async (values: {
     date: string;
     clockInTime: string;
     clockOutTime: string;
@@ -235,19 +227,21 @@ export default function EmployeesPage() {
     const clockOutDateTime = new Date(`${values.date}T${values.clockOutTime}`);
     const duration = differenceInMilliseconds(clockOutDateTime, clockInDateTime);
 
-    const updatedLog: WorkLog = {
-      ...logToEdit,
+    const updatedLogData = {
       date: clockInDateTime.toISOString(),
       clockInTime: clockInDateTime.toISOString(),
       clockOutTime: clockOutDateTime.toISOString(),
       duration,
     };
 
-    setWorkLogs((prev) =>
-      prev.map((l) => (l.id === updatedLog.id ? updatedLog : l))
-    );
-    toast({ title: t('EmployeesPage.toastUpdatedTitle') });
-    setLogToEdit(null);
+    const logRef = doc(firestore, 'work_logs', logToEdit.id);
+    try {
+      await updateDoc(logRef, updatedLogData);
+      toast({ title: t('EmployeesPage.toastUpdatedTitle') });
+      setLogToEdit(null);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   };
 
   return (
@@ -256,29 +250,6 @@ export default function EmployeesPage() {
         title={t('EmployeesPage.title')}
         actions={
           <div className="flex items-center gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline">
-                  <Trash2 /> {t('EmployeesPage.clearLogs')}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t('EmployeesPage.clearLogsDialogTitle')}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t('EmployeesPage.clearLogsDialogDescription')}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t('EmployeesPage.cancel')}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearLogs}>
-                    {t('EmployeesPage.continue')}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
             <Button variant="outline" onClick={handleExport}>
               <Download /> {t('EmployeesPage.export')}
             </Button>
@@ -303,7 +274,7 @@ export default function EmployeesPage() {
               />
             </SelectTrigger>
             <SelectContent>
-              {employees.map((employee) => (
+              {employees?.map((employee) => (
                 <SelectItem key={employee.id} value={employee.id}>
                   {employee.name} - {employee.role}
                 </SelectItem>

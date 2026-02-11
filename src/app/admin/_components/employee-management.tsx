@@ -44,63 +44,92 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useFirestore } from '@/firebase';
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from 'firebase/firestore';
 
 type EmployeeManagementProps = {
   employees: Employee[];
-  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
 };
 
-export function EmployeeManagement({
-  employees,
-  setEmployees,
-}: EmployeeManagementProps) {
+export function EmployeeManagement({ employees }: EmployeeManagementProps) {
   const { t } = useI18n();
   const { toast } = useToast();
+  const firestore = useFirestore();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [employeeToDelete, setEmployeeToDelete] = React.useState<Employee | null>(
     null
   );
 
-  const handleAddEmployee = (values: {
+  const handleAddEmployee = async (values: {
     name: string;
     role: 'Pilot' | 'Mechanic' | 'Admin';
   }) => {
-    const newEmployee: Employee = {
-      id: `emp${Date.now()}`,
-      name: values.name,
-      role: values.role,
-      status: 'Clocked Out',
-    };
-    setEmployees((prev) => [newEmployee, ...prev]);
-    setIsAddDialogOpen(false);
-    toast({
-      title: t('EmployeeManagement.toastAddedTitle'),
-      description: t('EmployeeManagement.toastAddedDescription', {
+    try {
+      const newEmployee = {
         name: values.name,
-      }),
-    });
-  };
-
-  const confirmDeleteEmployee = () => {
-    if (employeeToDelete) {
-      setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete.id));
+        role: values.role,
+        status: 'Clocked Out',
+      };
+      await addDoc(collection(firestore, 'employees'), newEmployee);
+      setIsAddDialogOpen(false);
       toast({
-        title: t('EmployeeManagement.toastDeletedTitle'),
+        title: t('EmployeeManagement.toastAddedTitle'),
+        description: t('EmployeeManagement.toastAddedDescription', {
+          name: values.name,
+        }),
       });
-      window.location.reload();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
     }
   };
 
-  const handleRoleChange = (
+  const confirmDeleteEmployee = async () => {
+    if (employeeToDelete) {
+      try {
+        await deleteDoc(doc(firestore, 'employees', employeeToDelete.id));
+        toast({
+          title: t('EmployeeManagement.toastDeletedTitle'),
+        });
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message,
+        });
+      } finally {
+        setEmployeeToDelete(null);
+      }
+    }
+  };
+
+  const handleRoleChange = async (
     employeeId: string,
     newRole: 'Pilot' | 'Mechanic' | 'Admin'
   ) => {
-    setEmployees((prev) =>
-      prev.map((emp) => (emp.id === employeeId ? { ...emp, role: newRole } : emp))
-    );
-    toast({
-      title: t('EmployeeManagement.toastRoleUpdatedTitle'),
-    });
+    try {
+      await updateDoc(doc(firestore, 'employees', employeeId), {
+        role: newRole,
+      });
+      toast({
+        title: t('EmployeeManagement.toastRoleUpdatedTitle'),
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
+    }
   };
 
   return (

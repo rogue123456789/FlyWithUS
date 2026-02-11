@@ -64,21 +64,6 @@ service cloud.firestore {
     }
     
     /**
-     * Ensures an incoming document has a field that correctly references its parent's ID.
-     * Used on create operations to enforce relational integrity.
-     */
-    function hasValidOwnerLink(parentDocId, fieldName) {
-      return request.resource.data[fieldName] == parentDocId;
-    }
-
-    /**
-     * Ensures a relational ID field is immutable during an update.
-     */
-    function isOwnerLinkImmutable(fieldName) {
-      return request.resource.data[fieldName] == resource.data[fieldName];
-    }
-    
-    /**
      * A simple check to ensure a document exists before an update or delete operation.
      */
     function isExistingDoc() {
@@ -88,39 +73,22 @@ service cloud.firestore {
     /**
      * @description Manages employee profile data. This collection is for internal use and is fully controlled by Admins.
      * @path /employees/{employeeId}
-     * @allow (get) An Admin reads an employee's profile. `auth.uid` has an entry in `/roles_admin`.
-     * @deny (create) A non-Admin user tries to add a new employee record.
-     * @principle Enforces strict role-based access for sensitive data management.
      */
     match /employees/{employeeId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow read, list, create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Manages individual time entries for a user (employee). Access is restricted to the user or an Admin.
-     * @path /users/{userId}/time_entries/{timeEntryId}
-     * @allow (create) An authenticated user (uid: 'user123') creates a time entry under their own path `/users/user123/time_entries`.
-     * @deny (get) A user ('user456') tries to read a time entry from another user's path `/users/user123/time_entries`.
-     * @principle Restricts access to a user's own data tree (Ownership) with an admin override. Validates relational integrity on writes.
+     * @description Manages work log entries for all employees. Fully controlled by Admins.
+     * @path /work_logs/{workLogId}
      */
-    match /users/{userId}/time_entries/{timeEntryId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isOwner(userId) || isAdmin();
-      allow create: if (isOwner(userId) || isAdmin()) && hasValidOwnerLink(userId, 'employeeId');
-      allow update: if (isOwner(userId) || isAdmin()) && isExistingDoc() && isOwnerLinkImmutable('employeeId');
-      allow delete: if (isOwner(userId) || isAdmin()) && isExistingDoc();
+    match /work_logs/{workLogId} {
+      allow read, list, create, update, delete: if isAdmin();
     }
 
     /**
      * @description Stores information about aircraft. Writable only by Admins, but readable by Admins and Open Users.
      * @path /aircrafts/{aircraftId}
-     * @allow (list) An Open User lists all available aircraft. `auth.uid` has an entry in `/roles_open`.
-     * @deny (update) An Open User tries to modify an aircraft's maintenance date.
-     * @principle Segregates write permissions to a specific role (Admin) while allowing broader read access.
      */
     match /aircrafts/{aircraftId} {
       allow get: if isAdmin() || isOpenUser();
@@ -133,9 +101,6 @@ service cloud.firestore {
     /**
      * @description Stores flight logs. Writable only by Admins, but readable by Admins and Open Users.
      * @path /flight_logs/{flightLogId}
-     * @allow (get) An Admin or Open User reads a specific flight log.
-     * @deny (create) A regular authenticated user (who is not an Admin or Open User) tries to create a flight log.
-     * @principle Segregates write permissions to a specific role (Admin) while allowing broader read access.
      */
     match /flight_logs/{flightLogId} {
       allow get: if isAdmin() || isOpenUser();
@@ -148,9 +113,6 @@ service cloud.firestore {
     /**
      * @description Stores fuel consumption records. Writable only by Admins, but readable by Admins and Open Users.
      * @path /fuel_records/{fuelRecordId}
-     * @allow (list) An Admin or Open User lists all fuel records.
-     * @deny (delete) An Open User tries to delete a fuel record.
-     * @principle Segregates write permissions to a specific role (Admin) while allowing broader read access.
      */
     match /fuel_records/{fuelRecordId} {
       allow get: if isAdmin() || isOpenUser();
@@ -163,9 +125,6 @@ service cloud.firestore {
     /**
      * @description Manages which users have Admin privileges. Only other Admins can modify this collection. Users can read their own admin status.
      * @path /roles_admin/{adminUserId}
-     * @allow (create) An existing Admin adds a new user's UID to grant them admin rights.
-     * @deny (list) A non-Admin user tries to list all admins.
-     * @principle Protects privilege escalation by ensuring only admins can manage admin roles. Allows users to check their own status.
      */
     match /roles_admin/{adminUserId} {
       allow get: if isOwner(adminUserId);
@@ -178,9 +137,6 @@ service cloud.firestore {
     /**
      * @description Manages which users have Open User privileges. Only Admins can create new roles, but users can create their own role on signup.
      * @path /roles_open/{openUserId}
-     * @allow (create) A new user signs up and creates their own 'open' role document.
-     * @deny (create) An existing user tries to create a role for another user.
-     * @principle Allows self-service role creation for new users while protecting privilege escalation.
      */
     match /roles_open/{openUserId} {
       allow get: if isOwner(openUserId);

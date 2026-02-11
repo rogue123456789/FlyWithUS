@@ -1,189 +1,201 @@
 {
   "entities": {
     "Employee": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Employee",
       "type": "object",
       "description": "Represents an employee of the flight school.",
       "properties": {
-        "id": {
+        "name": {
           "type": "string",
-          "description": "Unique identifier for the Employee entity."
-        },
-        "firstName": {
-          "type": "string",
-          "description": "The first name of the employee."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The last name of the employee."
+          "description": "The full name of the employee."
         },
         "role": {
           "type": "string",
-          "description": "The role of the employee (e.g., pilot, instructor, mechanic)."
+          "description": "The role of the employee.",
+          "enum": [
+            "Pilot",
+            "Mechanic",
+            "Admin"
+          ]
         },
-        "contactNumber": {
+        "status": {
           "type": "string",
-          "description": "The employee's contact phone number."
+          "description": "The clock-in status of the employee.",
+          "enum": [
+            "Clocked In",
+            "Clocked Out"
+          ]
         },
-        "email": {
+        "lastClockIn": {
           "type": "string",
-          "description": "The employee's email address.",
-          "format": "email"
+          "format": "date-time",
+          "description": "The timestamp of the last clock-in."
         }
       },
       "required": [
-        "id",
-        "firstName",
-        "lastName",
+        "name",
         "role",
-        "email"
+        "status"
       ]
     },
-    "TimeEntry": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "TimeEntry",
+    "WorkLog": {
+      "title": "WorkLog",
       "type": "object",
       "description": "Represents an employee's time entry (check-in/check-out).",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the TimeEntry entity."
-        },
         "employeeId": {
           "type": "string",
-          "description": "Reference to Employee. (Relationship: Employee 1:N TimeEntry)"
+          "description": "The ID of the employee."
         },
-        "checkInTime": {
+        "employeeName": {
           "type": "string",
-          "description": "The date and time the employee checked in.",
-          "format": "date-time"
+          "description": "The name of the employee."
         },
-        "checkOutTime": {
+        "date": {
           "type": "string",
-          "description": "The date and time the employee checked out.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The date of the log."
+        },
+        "clockInTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The clock-in time."
+        },
+        "clockOutTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The clock-out time."
+        },
+        "duration": {
+          "type": "number",
+          "description": "The duration of the work session in milliseconds."
         }
       },
       "required": [
-        "id",
         "employeeId",
-        "checkInTime"
+        "employeeName",
+        "date",
+        "clockInTime",
+        "clockOutTime",
+        "duration"
       ]
     },
     "Aircraft": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Aircraft",
       "type": "object",
       "description": "Represents an aircraft in the flight school's fleet.",
       "properties": {
-        "id": {
+        "name": {
           "type": "string",
-          "description": "Unique identifier for the Aircraft entity."
+          "description": "The name or model of the aircraft."
         },
-        "tailNumber": {
-          "type": "string",
-          "description": "The tail number of the aircraft."
-        },
-        "make": {
-          "type": "string",
-          "description": "The make of the aircraft (e.g., Cessna)."
-        },
-        "model": {
-          "type": "string",
-          "description": "The model of the aircraft (e.g., 172)."
-        },
-        "lastMaintenanceDate": {
-          "type": "string",
-          "description": "The date of the aircraft's last maintenance.",
-          "format": "date-time"
-        },
-        "hoursSinceLastMaintenance": {
+        "totalHours": {
           "type": "number",
-          "description": "The number of hours flown since the last maintenance."
+          "description": "The total flight hours of the aircraft."
+        },
+        "nextMaintenanceHours": {
+          "type": "number",
+          "description": "The hour counter for the next scheduled maintenance."
+        },
+        "engineCheckHours": {
+          "type": "number",
+          "description": "The hour interval for engine checks."
+        },
+        "generalCheckHours": {
+          "type": "number",
+          "description": "The hour interval for general checks."
         }
       },
       "required": [
-        "id",
-        "tailNumber",
-        "make",
-        "model"
+        "name",
+        "totalHours",
+        "nextMaintenanceHours"
       ]
     },
     "FlightLog": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "FlightLog",
       "type": "object",
       "description": "Represents a flight log entry.",
       "properties": {
-        "id": {
+        "pilotName": {
           "type": "string",
-          "description": "Unique identifier for the FlightLog entity."
+          "description": "The name of the pilot."
         },
-        "pilotId": {
+        "planeId": {
           "type": "string",
-          "description": "Reference to Employee (pilot). (Relationship: Employee 1:N FlightLog)"
+          "description": "The ID of the aircraft."
         },
-        "aircraftId": {
+        "takeoffLocation": {
           "type": "string",
-          "description": "Reference to Aircraft. (Relationship: Aircraft 1:N FlightLog)"
+          "description": "The departure location."
         },
-        "flightDate": {
+        "landingLocation": {
           "type": "string",
-          "description": "The date of the flight.",
-          "format": "date-time"
+          "description": "The arrival location."
         },
         "flightDuration": {
           "type": "number",
           "description": "The duration of the flight in hours."
         },
-        "paymentMethod": {
+        "flightReason": {
           "type": "string",
-          "description": "The method of payment for the flight."
+          "description": "The purpose of the flight."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date of the flight."
         }
       },
       "required": [
-        "id",
-        "pilotId",
-        "aircraftId",
-        "flightDate",
-        "flightDuration"
+        "pilotName",
+        "planeId",
+        "takeoffLocation",
+        "landingLocation",
+        "flightDuration",
+        "flightReason",
+        "date"
       ]
     },
-    "FuelRecord": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "FuelRecord",
+    "FuelLog": {
+      "title": "FuelLog",
       "type": "object",
       "description": "Represents a record of fuel consumption.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the FuelRecord entity."
-        },
-        "aircraftId": {
-          "type": "string",
-          "description": "Reference to Aircraft. (Relationship: Aircraft 1:N FuelRecord)"
-        },
-        "recordDate": {
-          "type": "string",
-          "description": "The date of the fuel record.",
-          "format": "date-time"
-        },
-        "gallonsUsed": {
-          "type": "number",
-          "description": "The number of gallons of fuel used."
-        },
         "customerType": {
           "type": "string",
-          "description": "The type of customer (company or external)."
+          "enum": [
+            "Company",
+            "External",
+            "Refueling"
+          ]
+        },
+        "planeId": {
+          "type": "string"
+        },
+        "startQuantity": {
+          "type": "number"
+        },
+        "liters": {
+          "type": "number"
+        },
+        "leftOverQuantity": {
+          "type": "number"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cost": {
+          "type": "number"
         }
       },
       "required": [
-        "id",
-        "aircraftId",
-        "recordDate",
-        "gallonsUsed",
-        "customerType"
+        "customerType",
+        "startQuantity",
+        "liters",
+        "leftOverQuantity",
+        "date"
       ]
     },
     "AdminUser": {
@@ -254,33 +266,17 @@
           "schema": {
             "$ref": "#/backend/entities/Employee"
           },
-          "description": "Stores employee information. Accessible to admins. Includes all employee details.",
-          "params": [
-            {
-              "name": "employeeId",
-              "description": "The unique identifier of the employee."
-            }
-          ]
+          "description": "Stores employee information. Accessible to admins."
         }
       },
       {
-        "path": "/users/{userId}/time_entries/{timeEntryId}",
+        "path": "/work_logs/{workLogId}",
         "definition": {
-          "entityName": "TimeEntry",
+          "entityName": "WorkLog",
           "schema": {
-            "$ref": "#/backend/entities/TimeEntry"
+            "$ref": "#/backend/entities/WorkLog"
           },
-          "description": "Stores time entries for each employee. Accessible only to the employee and admins.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user/employee."
-            },
-            {
-              "name": "timeEntryId",
-              "description": "The unique identifier of the time entry."
-            }
-          ]
+          "description": "Stores work log entries. Accessible to admins."
         }
       },
       {
@@ -290,13 +286,7 @@
           "schema": {
             "$ref": "#/backend/entities/Aircraft"
           },
-          "description": "Stores information about each aircraft. Accessible to admins.",
-          "params": [
-            {
-              "name": "aircraftId",
-              "description": "The unique identifier of the aircraft."
-            }
-          ]
+          "description": "Stores information about each aircraft. Accessible to admins and open users."
         }
       },
       {
@@ -306,29 +296,17 @@
           "schema": {
             "$ref": "#/backend/entities/FlightLog"
           },
-          "description": "Stores flight log entries. Accessible to admins.",
-          "params": [
-            {
-              "name": "flightLogId",
-              "description": "The unique identifier of the flight log."
-            }
-          ]
+          "description": "Stores flight log entries. Accessible to admins and open users."
         }
       },
       {
         "path": "/fuel_records/{fuelRecordId}",
         "definition": {
-          "entityName": "FuelRecord",
+          "entityName": "FuelLog",
           "schema": {
-            "$ref": "#/backend/entities/FuelRecord"
+            "$ref": "#/backend/entities/FuelLog"
           },
-          "description": "Stores fuel records. Accessible to admins.",
-          "params": [
-            {
-              "name": "fuelRecordId",
-              "description": "The unique identifier of the fuel record."
-            }
-          ]
+          "description": "Stores fuel records. Accessible to admins and open users."
         }
       },
       {
@@ -338,13 +316,7 @@
           "schema": {
             "$ref": "#/backend/entities/AdminUser"
           },
-          "description": "Indicates that a user is an admin. Existence of a document grants admin privileges.",
-          "params": [
-            {
-              "name": "adminUserId",
-              "description": "The unique identifier of the admin user."
-            }
-          ]
+          "description": "Indicates that a user is an admin. Existence of a document grants admin privileges."
         }
       },
       {
@@ -354,16 +326,9 @@
           "schema": {
             "$ref": "#/backend/entities/OpenUser"
           },
-          "description": "Indicates that a user is an open user. Existence of a document grants open user privileges.",
-          "params": [
-            {
-              "name": "openUserId",
-              "description": "The unique identifier of the open user."
-            }
-          ]
+          "description": "Indicates that a user is an open user. Existence of a document grants open user privileges."
         }
       }
-    ],
-    "reasoning": "The Firestore data structure is designed to support the Skybound Manager application, focusing on employee time tracking, flight log management, and fuel usage tracking. It incorporates the principles of Authorization Independence, Structural Segregation, and Access Modeling to ensure security, scalability, and debuggability. Specifically, it addresses authorization by using path-based ownership for user-specific data (like TimeEntries) and dedicated collections for admin and open users.  \n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies.  No `get()` calls are required to validate authorization, because ownership is implicitly defined by the path, such as in the `/users/{userId}/time_entries/{timeEntryId}` path. Since there's no hierarchical authorization, this structure will allow atomic operations. \n\nStructural Segregation is implemented by separating admin and open user data into dedicated collections (`/roles_admin/{uid}` and `/roles_open/{uid}`). This ensures that different data types with different access requirements do not reside in the same collection, thus simplifying security rules.\n\nAccess Modeling is achieved by using path-based ownership for resources related to employees (e.g., time entries).  For example, `time_entries` are stored as a subcollection of `users`, enforcing that only the user (or an admin) can access their own time entries. Global roles (admin, open) are handled via the existence of documents in dedicated collections, which simplifies role-based authorization rules.  \n\nThe structure efficiently supports QAPs (Rules are not Filters) by using structural segregation. Listing operations are naturally secured, as each collection has a clear and consistent security posture. For instance, listing time entries under `/users/{userId}/time_entries` will only return entries that belong to the authenticated user, ensuring that rules do not act as filters.\n\nExplicit State Modeling is not directly apparent from the entities, but is recommended to be applied during implementation (e.g., adding a 'status' field to FlightLog to track flight status). Predictable Schema is enforced by adhering to strict naming conventions and avoiding dynamic keys.  Radical Consistency is maintained by standardizing authorization fields and using descriptive wildcards."
+    ]
   }
 }
