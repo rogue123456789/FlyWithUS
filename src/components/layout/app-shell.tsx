@@ -309,8 +309,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
-  if (isAuthPage || !user) {
+  if (isAuthPage) {
     return <>{children}</>;
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
