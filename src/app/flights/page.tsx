@@ -55,7 +55,13 @@ import {
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { downloadCsv } from '@/lib/utils';
-import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  useUser,
+  useDoc,
+} from '@/firebase';
 import {
   collection,
   doc,
@@ -146,14 +152,14 @@ export default function FlightsPage() {
   const { user } = useUser();
 
   const flightLogsCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'flight_logs') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'flight_logs') : null),
+    [firestore, user]
   );
   const { data: flightLogs } = useCollection<FlightLog>(flightLogsCollection);
 
   const planesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'aircrafts') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'aircrafts') : null),
+    [firestore, user]
   );
   const { data: planes } = useCollection<Plane>(planesCollection);
 
@@ -284,7 +290,7 @@ export default function FlightsPage() {
       setLogToDelete(null);
     }
   };
-  
+
   const handleClearAllFlightLogs = async () => {
     if (!firestore || !flightLogs || flightLogs.length === 0) {
       toast({ title: t('FlightsPage.toastNoLogs') });
@@ -355,7 +361,10 @@ export default function FlightsPage() {
               {t('FlightsPage.export')}
             </Button>
             {userRole === 'admin' && (
-               <Button variant="destructive" onClick={() => setIsClearDialogOpen(true)}>
+              <Button
+                variant="destructive"
+                onClick={() => setIsClearDialogOpen(true)}
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 {t('FlightsPage.clearAll')}
               </Button>

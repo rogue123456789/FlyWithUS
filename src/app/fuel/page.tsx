@@ -58,8 +58,21 @@ import {
 import { format, parseISO } from 'date-fns';
 import { downloadCsv } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  useUser,
+  useDoc,
+} from '@/firebase';
+import {
+  collection,
+  addDoc,
+  doc,
+  updateDoc,
+  setDoc,
+  deleteDoc,
+} from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 
 const AddFuelLogDialog = ({
@@ -180,14 +193,14 @@ export default function FuelPage() {
   const { user } = useUser();
 
   const fuelLogsCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'fuel_records') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'fuel_records') : null),
+    [firestore, user]
   );
   const { data: fuelLogs } = useCollection<FuelLog>(fuelLogsCollection);
 
   const planesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'aircrafts') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'aircrafts') : null),
+    [firestore, user]
   );
   const { data: planes } = useCollection<Plane>(planesCollection);
 
@@ -237,6 +250,7 @@ export default function FuelPage() {
         if (newLogData.aircraftSelection === 'new') {
           planeId = newLogData.newPlaneId;
           const newPlane: Plane = {
+            id: planeId,
             name: newLogData.newPlaneName,
             totalHours: 0,
             nextMaintenanceHours: 100,
@@ -261,7 +275,11 @@ export default function FuelPage() {
 
       await addDoc(collection(firestore, 'fuel_records'), newLog);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
     }
   };
 
@@ -283,7 +301,11 @@ export default function FuelPage() {
       };
       await addDoc(collection(firestore, 'fuel_records'), newLog);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
     }
   };
 
@@ -297,7 +319,11 @@ export default function FuelPage() {
       });
       setLogToEdit(null);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
     }
   };
 
@@ -334,7 +360,6 @@ export default function FuelPage() {
       setIsClearDialogOpen(false);
     }
   };
-
 
   return (
     <div className="flex flex-col gap-8">

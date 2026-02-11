@@ -10,7 +10,12 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { UserManagement } from './_components/user-management';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  useUser,
+} from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 import type { Plane, Employee } from '@/lib/types';
@@ -20,10 +25,11 @@ import { EmployeeManagement } from './_components/employee-management';
 export default function AdminPage() {
   const firestore = useFirestore();
   const { t } = useI18n();
+  const { user } = useUser();
 
   const adminUsersCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'roles_admin') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'roles_admin') : null),
+    [firestore, user]
   );
   const {
     data: adminUsers,
@@ -32,8 +38,8 @@ export default function AdminPage() {
   } = useCollection(adminUsersCollection);
 
   const openUsersCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'roles_open') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'roles_open') : null),
+    [firestore, user]
   );
   const {
     data: openUsers,
@@ -42,15 +48,15 @@ export default function AdminPage() {
   } = useCollection(openUsersCollection);
 
   const planesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'aircrafts') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'aircrafts') : null),
+    [firestore, user]
   );
   const { data: planes, isLoading: planesLoading } =
     useCollection<Plane>(planesCollection);
 
   const employeesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'employees') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'employees') : null),
+    [firestore, user]
   );
   const { data: employees, isLoading: employeesLoading } =
     useCollection<Employee>(employeesCollection);

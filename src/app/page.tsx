@@ -18,38 +18,44 @@ import { FlightHoursChart } from '@/components/dashboard/flight-hours-chart';
 import { MaintenanceSchedule } from '@/components/dashboard/maintenance-schedule';
 import { RecentLogs } from '@/components/dashboard/recent-logs';
 import { useI18n } from '@/context/i18n-context';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  useUser,
+} from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { FlightLog, FuelLog, Employee, Plane } from '@/lib/types';
 
 export default function DashboardPage() {
   const { t } = useI18n();
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const flightLogsCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'flight_logs') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'flight_logs') : null),
+    [firestore, user]
   );
   const { data: flightLogs, isLoading: flightLogsLoading } =
     useCollection<FlightLog>(flightLogsCollection);
 
   const fuelLogsCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'fuel_records') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'fuel_records') : null),
+    [firestore, user]
   );
   const { data: fuelLogs, isLoading: fuelLogsLoading } =
     useCollection<FuelLog>(fuelLogsCollection);
 
   const employeesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'employees') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'employees') : null),
+    [firestore, user]
   );
   const { data: employees, isLoading: employeesLoading } =
     useCollection<Employee>(employeesCollection);
 
   const planesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'aircrafts') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'aircrafts') : null),
+    [firestore, user]
   );
   const { data: planes, isLoading: planesLoading } =
     useCollection<Plane>(planesCollection);

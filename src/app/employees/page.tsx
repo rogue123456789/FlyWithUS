@@ -28,7 +28,13 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
-import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  useUser,
+  useDoc,
+} from '@/firebase';
 import {
   collection,
   doc,
@@ -112,14 +118,14 @@ export default function EmployeesPage() {
   const { user } = useUser();
 
   const employeesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'employees') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'employees') : null),
+    [firestore, user]
   );
   const { data: employees } = useCollection<Employee>(employeesCollection);
 
   const workLogsCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'work_logs') : null),
-    [firestore]
+    () => (user && firestore ? collection(firestore, 'work_logs') : null),
+    [firestore, user]
   );
   const { data: workLogs } = useCollection<WorkLog>(workLogsCollection);
 
