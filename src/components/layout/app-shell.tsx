@@ -26,6 +26,7 @@ import {
   ChevronDown,
   LogOut,
   LoaderCircle,
+  Settings,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import {
@@ -45,6 +46,7 @@ const allNavItems = [
   { href: '/flights', label: 'Flights', icon: Plane, role: ['admin', 'open'] },
   { href: '/fuel', label: 'Fuel', icon: Fuel, role: ['admin', 'open'] },
   { href: '/employees', label: 'Employees', icon: Users, role: ['admin'] },
+  { href: '/admin', label: 'Admin', icon: Settings, role: ['admin'] },
 ];
 
 const UserMenu = () => {
@@ -172,30 +174,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Fetch both role documents in parallel.
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(null);
+  const [isRoleLoading, setIsRoleLoading] = React.useState(true);
+
   const adminRef = useMemoFirebase(() => user ? doc(firestore, 'roles_admin', user.uid) : null, [firestore, user]);
   const { data: adminRoleDoc, isLoading: isAdminLoading } = useDoc(adminRef);
 
   const openRef = useMemoFirebase(() => user ? doc(firestore, 'roles_open', user.uid) : null, [firestore, user]);
   const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
-  // The roles are loading if the user is loading or if either of the role doc checks are loading.
-  const isRoleLoading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
-  
-  // Determine the role with clear priority. Admin always wins.
-  const userRole = React.useMemo<'admin' | 'open' | null>(() => {
-    if (adminRoleDoc) {
-      return 'admin';
-    }
-    if (openRoleDoc) {
-      return 'open';
-    }
-    return null;
-  }, [adminRoleDoc, openRoleDoc]);
+  React.useEffect(() => {
+    const loading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
+    setIsRoleLoading(loading);
 
+    if (!loading) {
+      if (adminRoleDoc) {
+        setUserRole('admin');
+      } else if (openRoleDoc) {
+        setUserRole('open');
+      } else {
+        setUserRole(null);
+      }
+    }
+  }, [isUserLoading, isAdminLoading, isOpenLoading, adminRoleDoc, openRoleDoc, user]);
 
   React.useEffect(() => {
-    if (isUserLoading || (user && (isAdminLoading || isOpenLoading))) return;
+    if (isRoleLoading) return;
 
     const isAuthPage = pathname === '/login' || pathname === '/signup';
 
@@ -204,7 +208,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } else if (user && isAuthPage) {
       router.replace('/');
     }
-  }, [user, isUserLoading, isAdminLoading, isOpenLoading, pathname, router]);
+  }, [user, isRoleLoading, pathname, router]);
 
   if (isRoleLoading && pathname !== '/login' && pathname !== '/signup') {
     return (
