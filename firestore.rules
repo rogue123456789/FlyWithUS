@@ -1,31 +1,25 @@
 /**
- * Core Philosophy: This ruleset implements a Role-Based Access Control (RBAC) model combined with user ownership.
+ * Core Philosophy: This ruleset implements a Role-Based Access Control (RBAC) model.
  * There are two primary roles: "Admin" and "Open User". A user's role is determined by the existence of their
  * UID as a document in the `/roles_admin` or `/roles_open` collections, respectively. Admins have full control
- * over all data. Open Users have read-only access to public data like aircraft and flight logs. All other
- * authenticated users (employees) can only manage their own user-specific data.
+ * over all data. Open Users can read and write operational data (flights, fuel, work logs) as needed for daily
+ * tasks on a shared device, but cannot perform administrative actions like deleting employees or aircraft.
  *
  * Data Structure:
- * - /users/{userId}/...: Private, user-owned data (e.g., time entries).
- * - /employees, /aircrafts, /flight_logs, /fuel_records: Top-level collections for business data, managed by Admins.
+ * - /employees, /aircrafts, /flight_logs, /fuel_records, /work_logs: Top-level collections for business data.
  * - /roles_admin, /roles_open: Collections used for role management. The existence of a document grants the role.
  *
  * Key Security Decisions:
  * - Admin Supremacy: Users with the 'Admin' role can read and write all data across the application.
- * - Open User Read Access: Users with the 'Open User' role are granted read-only access to non-sensitive
- *   collections like `aircrafts`, `flight_logs`, and `fuel_records`. They cannot view employee PII.
- * - User Data Ownership: User-specific data (e.g., `/users/{userId}/time_entries`) is strictly owned. Only the
- *   document owner or an Admin can access it.
+ * - Open User Write Access: To support a shared "kiosk" mode, 'Open Users' are granted write access
+ *   to operational collections like `flight_logs`, `fuel_records`, and `work_logs`. They can also update
+ *   employee statuses (for clocking in/out) and aircraft hours.
+ * - Destructive Action Protection: Creation and deletion of core assets like `employees` and `aircrafts` are
+ *   restricted to Admins to prevent accidental data loss from the shared account.
  * - Role Management Security: The role collections (`/roles_admin`, `/roles_open`) can only be modified by
- *   existing Admins, preventing users from escalating their own privileges.
+ *   existing Admins (with an exception for a user creating their own 'open' role), preventing users from
+ *   escalating their own privileges.
  * - Default Deny: Access is implicitly denied unless explicitly granted by a rule.
- *
- * Denormalization for Authorization: Roles are managed by the existence of documents in `/roles_admin/{uid}` and
- * `/roles_open/{uid}`. This allows for fast, efficient role checks using `exists()` without needing to read a user
- * profile document, simplifying rules and improving performance.
- *
- * Structural Segregation: User-specific data (`time_entries`) is segregated under a `/users/{userId}` path,
- * cleanly separating it from global, admin-managed data. Role documents are also in their own dedicated collections.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -71,48 +65,50 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages employee profile data. Readable by all authenticated users, writable only by Admins.
-     * @path /employees/{employeeId}
+     * @description Manages employee profile data. Readable by all authenticated users.
+     * Admins can create/delete. Admins and Open Users can update (for clock-in/out).
      */
     match /employees/{employeeId} {
       allow get, list: if isAdmin() || isOpenUser();
-      allow create, update, delete: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isOpenUser();
     }
 
     /**
-     * @description Manages work log entries for all employees. Readable by all authenticated users, writable only by Admins.
-     * @path /work_logs/{workLogId}
+     * @description Manages work log entries for all employees. 
+     * Writable by Admins and Open Users.
      */
     match /work_logs/{workLogId} {
       allow get, list: if isAdmin() || isOpenUser();
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin() || isOpenUser(); // create, update, delete
     }
 
     /**
-     * @description Stores information about aircraft. Writable only by Admins, but readable by Admins and Open Users.
-     * @path /aircrafts/{aircraftId}
+     * @description Stores information about aircraft. Readable by all.
+     * Admins can create/delete. Admins and Open Users can update (for flight hours).
      */
     match /aircrafts/{aircraftId} {
       allow get, list: if isAdmin() || isOpenUser();
-      allow create, update, delete: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isOpenUser();
     }
 
     /**
-     * @description Stores flight logs. Writable only by Admins, but readable by Admins and Open Users.
-     * @path /flight_logs/{flightLogId}
+     * @description Stores flight logs. 
+     * Writable by Admins and Open Users.
      */
     match /flight_logs/{flightLogId} {
       allow get, list: if isAdmin() || isOpenUser();
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin() || isOpenUser(); // create, update, delete
     }
 
     /**
-     * @description Stores fuel consumption records. Writable only by Admins, but readable by Admins and Open Users.
-     * @path /fuel_records/{fuelRecordId}
+     * @description Stores fuel consumption records.
+     * Writable by Admins and Open Users.
      */
     match /fuel_records/{fuelRecordId} {
       allow get, list: if isAdmin() || isOpenUser();
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin() || isOpenUser(); // create, update, delete
     }
 
     /**

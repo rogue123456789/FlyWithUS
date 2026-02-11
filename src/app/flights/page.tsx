@@ -365,19 +365,23 @@ export default function FlightsPage() {
       <PageHeader
         title={t('FlightsPage.title')}
         actions={
-          userRole === 'admin' && (
+          (userRole === 'admin' || userRole === 'open') && (
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={handleExport}>
-                <Download className="mr-2 h-4 w-4" />
-                {t('FlightsPage.export')}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => setIsClearDialogOpen(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('FlightsPage.clearAll')}
-              </Button>
+              {userRole === 'admin' && (
+                <>
+                  <Button variant="outline" onClick={handleExport}>
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('FlightsPage.export')}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setIsClearDialogOpen(true)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t('FlightsPage.clearAll')}
+                  </Button>
+                </>
+              )}
               <AddFlightLogDialog
                 onAddFlightLog={handleAddFlightLog}
                 planes={planes ?? []}
@@ -405,11 +409,9 @@ export default function FlightsPage() {
                 <TableHead>{t('FlightsPage.tableTo')}</TableHead>
                 <TableHead>{t('FlightsPage.tableDuration')}</TableHead>
                 <TableHead>{t('FlightsPage.tableReason')}</TableHead>
-                {userRole === 'admin' && (
-                  <TableHead className="text-right">
-                    {t('FlightsPage.tableActions')}
-                  </TableHead>
-                )}
+                <TableHead className="text-right">
+                  {t('FlightsPage.tableActions')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -424,30 +426,28 @@ export default function FlightsPage() {
                   <TableCell>{log.landingLocation}</TableCell>
                   <TableCell>{log.flightDuration.toFixed(1)}h</TableCell>
                   <TableCell>{log.flightReason}</TableCell>
-                  {userRole === 'admin' && (
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            {t('FlightsPage.edit')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onSelect={() => setLogToDelete(log)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {t('FlightsPage.delete')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          {t('FlightsPage.edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onSelect={() => setLogToDelete(log)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {t('FlightsPage.delete')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

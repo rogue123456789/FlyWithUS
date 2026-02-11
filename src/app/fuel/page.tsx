@@ -378,19 +378,23 @@ export default function FuelPage() {
       <PageHeader
         title={t('FuelPage.title')}
         actions={
-          userRole === 'admin' && (
+          (userRole === 'admin' || userRole === 'open') && (
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={handleExport}>
-                <Download className="mr-2 h-4 w-4" />
-                {t('FuelPage.export')}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => setIsClearDialogOpen(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('FuelPage.clearAll')}
-              </Button>
+              {userRole === 'admin' && (
+                <>
+                  <Button variant="outline" onClick={handleExport}>
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('FuelPage.export')}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setIsClearDialogOpen(true)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t('FuelPage.clearAll')}
+                  </Button>
+                </>
+              )}
               <AddRefuelLogDialog onAddRefuelLog={handleAddRefuelLog} />
               <AddFuelLogDialog
                 onAddFuelLog={handleAddFuelLog}
@@ -419,11 +423,9 @@ export default function FuelPage() {
                 <TableHead>{t('FuelPage.tableStart')}</TableHead>
                 <TableHead>{t('FuelPage.tableDispensed')}</TableHead>
                 <TableHead>{t('FuelPage.tableLeftOver')}</TableHead>
-                {userRole === 'admin' && (
-                  <TableHead className="text-right">
-                    {t('FuelPage.tableActions')}
-                  </TableHead>
-                )}
+                <TableHead className="text-right">
+                  {t('FuelPage.tableActions')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -457,23 +459,21 @@ export default function FuelPage() {
                       : log.liters.toFixed(1)}
                   </TableCell>
                   <TableCell>{log.leftOverQuantity.toFixed(1)}</TableCell>
-                  {userRole === 'admin' && (
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            {t('FuelPage.edit')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          {t('FuelPage.edit')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

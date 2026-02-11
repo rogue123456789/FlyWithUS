@@ -370,74 +370,72 @@ export default function EmployeesPage() {
         }
       />
 
-      {userRole === 'admin' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock /> {t('EmployeesPage.timeClockCardTitle')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Select
-              onValueChange={setSelectedEmployeeId}
-              value={selectedEmployeeId ?? ''}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={t('EmployeesPage.selectEmployeePlaceholder')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {employees?.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name} - {employee.role}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock /> {t('EmployeesPage.timeClockCardTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Select
+            onValueChange={setSelectedEmployeeId}
+            value={selectedEmployeeId ?? ''}
+          >
+            <SelectTrigger>
+              <SelectValue
+                placeholder={t('EmployeesPage.selectEmployeePlaceholder')}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {employees?.map((employee) => (
+                <SelectItem key={employee.id} value={employee.id}>
+                  {employee.name} - {employee.role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            {selectedEmployee && selectedEmployee.status === 'Clocked In' ? (
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <p>
-                    {t('EmployeesPage.clockedInAt')}{' '}
-                    {selectedEmployee.lastClockIn &&
-                      format(parseISO(selectedEmployee.lastClockIn), 'p')}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('EmployeesPage.sessionDuration')}{' '}
-                    {selectedEmployee.lastClockIn && (
-                      <LiveTimer startTime={selectedEmployee.lastClockIn} />
-                    )}
-                  </p>
-                </div>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleClockOut(selectedEmployee.id)}
-                >
-                  <LogOut /> {t('EmployeesPage.clockOut')}
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between rounded-lg border p-4">
+          {selectedEmployee && selectedEmployee.status === 'Clocked In' ? (
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div>
                 <p>
-                  {selectedEmployee
-                    ? t('EmployeesPage.clockedOutMessage', {
-                        name: selectedEmployee.name,
-                      })
-                    : t('EmployeesPage.selectEmployeeMessage')}
+                  {t('EmployeesPage.clockedInAt')}{' '}
+                  {selectedEmployee.lastClockIn &&
+                    format(parseISO(selectedEmployee.lastClockIn), 'p')}
                 </p>
-                <Button
-                  onClick={() => handleClockIn(selectedEmployeeId!)}
-                  disabled={!selectedEmployeeId}
-                >
-                  <LogIn /> {t('EmployeesPage.clockIn')}
-                </Button>
+                <p className="text-sm text-muted-foreground">
+                  {t('EmployeesPage.sessionDuration')}{' '}
+                  {selectedEmployee.lastClockIn && (
+                    <LiveTimer startTime={selectedEmployee.lastClockIn} />
+                  )}
+                </p>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              <Button
+                variant="destructive"
+                onClick={() => handleClockOut(selectedEmployee.id)}
+              >
+                <LogOut /> {t('EmployeesPage.clockOut')}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <p>
+                {selectedEmployee
+                  ? t('EmployeesPage.clockedOutMessage', {
+                      name: selectedEmployee.name,
+                    })
+                  : t('EmployeesPage.selectEmployeeMessage')}
+              </p>
+              <Button
+                onClick={() => handleClockIn(selectedEmployeeId!)}
+                disabled={!selectedEmployeeId}
+              >
+                <LogIn /> {t('EmployeesPage.clockIn')}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -455,11 +453,9 @@ export default function EmployeesPage() {
                 <TableHead>{t('EmployeesPage.tableClockIn')}</TableHead>
                 <TableHead>{t('EmployeesPage.tableClockOut')}</TableHead>
                 <TableHead>{t('EmployeesPage.tableDuration')}</TableHead>
-                {userRole === 'admin' && (
-                  <TableHead className="text-right">
-                    {t('EmployeesPage.tableActions')}
-                  </TableHead>
-                )}
+                <TableHead className="text-right">
+                  {t('EmployeesPage.tableActions')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -486,30 +482,28 @@ export default function EmployeesPage() {
                     {format(parseISO(log.clockOutTime), 'p')}
                   </TableCell>
                   <TableCell>{formatDuration(log.duration)}</TableCell>
-                  {userRole === 'admin' && (
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            {t('EmployeesPage.edit')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onSelect={() => setWorkLogToDelete(log)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {t('EmployeesPage.delete')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          {t('EmployeesPage.edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onSelect={() => setWorkLogToDelete(log)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {t('EmployeesPage.delete')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
