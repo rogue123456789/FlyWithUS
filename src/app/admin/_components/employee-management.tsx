@@ -81,16 +81,12 @@ export function EmployeeManagement({
     });
   };
 
-  const handleDeleteEmployee = (employeeId: string) => {
-    setEmployees((prev) => prev.filter((e) => e.id !== employeeId));
-    toast({
-      title: t('EmployeeManagement.toastDeletedTitle'),
-    });
-  };
-
   const confirmDeleteEmployee = () => {
     if (employeeToDelete) {
-      handleDeleteEmployee(employeeToDelete.id);
+      setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete.id));
+      toast({
+        title: t('EmployeeManagement.toastDeletedTitle'),
+      });
       setEmployeeToDelete(null);
     }
   };

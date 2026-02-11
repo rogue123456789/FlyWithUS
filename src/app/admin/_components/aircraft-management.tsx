@@ -43,19 +43,15 @@ export function AircraftManagement({
   const { toast } = useToast();
   const [planeToDelete, setPlaneToDelete] = React.useState<Plane | null>(null);
 
-  const handleDelete = (planeId: string) => {
-    setPlanes((prev) => prev.filter((p) => p.id !== planeId));
-    toast({
-      title: t('AircraftManagement.toastDeletedTitle'),
-      description: t('AircraftManagement.toastDeletedDescription', {
-        planeId,
-      }),
-    });
-  };
-
   const confirmDelete = () => {
     if (planeToDelete) {
-      handleDelete(planeToDelete.id);
+      setPlanes((prev) => prev.filter((p) => p.id !== planeToDelete.id));
+      toast({
+        title: t('AircraftManagement.toastDeletedTitle'),
+        description: t('AircraftManagement.toastDeletedDescription', {
+          planeId: planeToDelete.id,
+        }),
+      });
       setPlaneToDelete(null);
     }
   };
