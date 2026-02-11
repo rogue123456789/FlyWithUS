@@ -85,16 +85,22 @@ function formatDuration(ms: number) {
 }
 
 function LiveTimer({ startTime }: { startTime: string }) {
-  const [currentTime, setCurrentTime] = React.useState(new Date());
+  const [duration, setDuration] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    const updateDuration = () => {
+      setDuration(formatDistanceStrict(parseISO(startTime), new Date()));
+    };
 
-  const duration = formatDistanceStrict(parseISO(startTime), currentTime);
+    updateDuration();
+    const timer = setInterval(updateDuration, 1000);
+
+    return () => clearInterval(timer);
+  }, [startTime]);
+
+  if (duration === null) {
+    return <span className="font-mono">...</span>;
+  }
 
   return <span className="font-mono">{duration}</span>;
 }
