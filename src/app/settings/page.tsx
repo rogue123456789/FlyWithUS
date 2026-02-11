@@ -8,20 +8,36 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
+import { LanguageSwitcher } from './_components/language-switcher';
+import { useI18n } from '@/context/i18n-context';
 
 export default function SettingsPage() {
+  const { t } = useI18n();
+
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Settings" />
+      <PageHeader title={t('SettingsPage.title')} />
       <Card>
         <CardHeader>
-          <CardTitle>Application Settings</CardTitle>
+          <CardTitle>{t('SettingsPage.cardTitle')}</CardTitle>
           <CardDescription>
-            Manage your application settings here.
+            {t('SettingsPage.cardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p>Settings page is under construction.</p>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('SettingsPage.languageTitle')}</CardTitle>
+                <CardDescription>
+                  {t('SettingsPage.languageDescription')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LanguageSwitcher />
+              </CardContent>
+            </Card>
+          </div>
         </CardContent>
       </Card>
     </div>

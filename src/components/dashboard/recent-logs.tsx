@@ -1,3 +1,5 @@
+'use client';
+
 import type { FlightLog, FuelLog } from '@/lib/types';
 import {
   Table,
@@ -9,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
+import { useI18n } from '@/context/i18n-context';
 
 type RecentLogsProps = {
   flightLogs: FlightLog[];
@@ -16,6 +19,8 @@ type RecentLogsProps = {
 };
 
 export function RecentLogs({ flightLogs, fuelLogs }: RecentLogsProps) {
+  const { t } = useI18n();
+
   const combinedLogs = [
     ...flightLogs.map((log) => ({ ...log, type: 'Flight' })),
     ...fuelLogs.map((log) => ({ ...log, type: 'Fuel' })),
@@ -27,9 +32,9 @@ export function RecentLogs({ flightLogs, fuelLogs }: RecentLogsProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Type</TableHead>
-          <TableHead>Details</TableHead>
-          <TableHead className="text-right">Date</TableHead>
+          <TableHead>{t('RecentLogs.type')}</TableHead>
+          <TableHead>{t('RecentLogs.details')}</TableHead>
+          <TableHead className="text-right">{t('RecentLogs.date')}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -37,13 +42,24 @@ export function RecentLogs({ flightLogs, fuelLogs }: RecentLogsProps) {
           <TableRow key={`${log.type}-${log.id}`}>
             <TableCell>
               <Badge variant={log.type === 'Flight' ? 'default' : 'secondary'}>
-                {log.type}
+                {log.type === 'Flight'
+                  ? t('RecentLogs.flight')
+                  : t('RecentLogs.fuel')}
               </Badge>
             </TableCell>
             <TableCell>
               {log.type === 'Flight'
-                ? `Pilot: ${log.pilotName}, Plane: ${log.planeId}, ${log.takeoffLocation} → ${log.landingLocation}, Duration: ${log.flightDuration.toFixed(1)}h`
-                : `Type: ${log.customerType}, Liters: ${log.liters}`}
+                ? t('RecentLogs.flightDetails', {
+                    pilotName: log.pilotName,
+                    planeId: log.planeId,
+                    takeoffLocation: log.takeoffLocation,
+                    landingLocation: log.landingLocation,
+                    flightDuration: log.flightDuration.toFixed(1),
+                  })
+                : t('RecentLogs.fuelDetails', {
+                    customerType: log.customerType,
+                    liters: log.liters,
+                  })}
             </TableCell>
             <TableCell className="text-right">
               {format(parseISO(log.date), 'MMM d, yyyy')}

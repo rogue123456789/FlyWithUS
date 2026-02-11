@@ -12,9 +12,11 @@ import {
 import { UserManagement } from './_components/user-management';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
+import { useI18n } from '@/context/i18n-context';
 
 export default function AdminPage() {
   const firestore = useFirestore();
+  const { t } = useI18n();
 
   const adminUsersCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'roles_admin') : null),
@@ -40,7 +42,11 @@ export default function AdminPage() {
     const usersMap = new Map();
 
     adminUsers?.forEach(user => {
-      usersMap.set(user.id, { ...user, role: 'admin' });
+      if (usersMap.has(user.id)) {
+        usersMap.set(user.id, { ...usersMap.get(user.id), role: 'admin' });
+      } else {
+        usersMap.set(user.id, { ...user, role: 'admin' });
+      }
     });
 
     openUsers?.forEach(user => {
@@ -57,18 +63,22 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Admin Panel" />
+      <PageHeader title={t('AdminPage.title')} />
 
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
+          <CardTitle>{t('AdminPage.cardTitle')}</CardTitle>
           <CardDescription>
-            View and manage user roles in the application.
+            {t('AdminPage.cardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading && <p>Loading users...</p>}
-          {error && <p className="text-destructive">Error loading users: {error.message}</p>}
+          {isLoading && <p>{t('AdminPage.loading')}</p>}
+          {error && (
+            <p className="text-destructive">
+              {t('AdminPage.error', { message: error.message })}
+            </p>
+          )}
           {!isLoading && !error && <UserManagement users={allUsers} />}
         </CardContent>
       </Card>

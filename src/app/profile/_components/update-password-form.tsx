@@ -14,24 +14,33 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
-
-const formSchema = z
-  .object({
-    currentPassword: z.string().min(1, { message: 'Current password is required.' }),
-    newPassword: z.string().min(6, { message: 'New password must be at least 6 characters.' }),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords don't match.",
-    path: ['confirmPassword'],
-  });
+import { useI18n } from '@/context/i18n-context';
 
 type UpdatePasswordFormProps = {
-  onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
+  onSubmit: (values: z.infer<ReturnType<typeof getFormSchema>>) => Promise<void>;
 };
+
+const getFormSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      currentPassword: z
+        .string()
+        .min(1, { message: t('UpdatePasswordForm.currentPasswordRequired') }),
+      newPassword: z
+        .string()
+        .min(6, { message: t('UpdatePasswordForm.newPasswordRequired') }),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: t('UpdatePasswordForm.passwordsNoMatch'),
+      path: ['confirmPassword'],
+    });
 
 export function UpdatePasswordForm({ onSubmit }: UpdatePasswordFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useI18n();
+  const formSchema = getFormSchema(t);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,7 +70,7 @@ export function UpdatePasswordForm({ onSubmit }: UpdatePasswordFormProps) {
           name="currentPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Current Password</FormLabel>
+              <FormLabel>{t('UpdatePasswordForm.currentPassword')}</FormLabel>
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
@@ -74,7 +83,7 @@ export function UpdatePasswordForm({ onSubmit }: UpdatePasswordFormProps) {
           name="newPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>New Password</FormLabel>
+              <FormLabel>{t('UpdatePasswordForm.newPassword')}</FormLabel>
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
@@ -87,7 +96,7 @@ export function UpdatePasswordForm({ onSubmit }: UpdatePasswordFormProps) {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm New Password</FormLabel>
+              <FormLabel>{t('UpdatePasswordForm.confirmNewPassword')}</FormLabel>
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
@@ -96,7 +105,9 @@ export function UpdatePasswordForm({ onSubmit }: UpdatePasswordFormProps) {
           )}
         />
         <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? 'Updating...' : 'Update Password'}
+          {isLoading
+            ? t('UpdatePasswordForm.updatingButton')
+            : t('UpdatePasswordForm.updateButton')}
         </Button>
       </form>
     </Form>

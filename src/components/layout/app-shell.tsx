@@ -39,18 +39,13 @@ import {
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '../ui/button';
-
-const allNavItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['admin', 'open'] },
-  { href: '/flights', label: 'Flights', icon: Plane, role: ['admin', 'open'] },
-  { href: '/fuel', label: 'Fuel', icon: Fuel, role: ['admin', 'open'] },
-  { href: '/employees', label: 'Employees', icon: Users, role: ['admin'] },
-];
+import { useI18n } from '@/context/i18n-context';
 
 const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const { t } = useI18n();
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -61,47 +56,52 @@ const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
     <DropdownMenu>
       <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-            <UserIcon className="h-5 w-5 text-muted-foreground" />
+          <UserIcon className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex flex-col overflow-hidden">
           <span className="truncate font-medium">{user?.email}</span>
           <span className="truncate text-xs text-sidebar-foreground/80">
-            Authenticated
+            {t('AppShell.authenticated')}
           </span>
         </div>
         <ChevronDown className="ml-auto h-4 w-4 shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('AppShell.myAccount')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {userRole === 'admin' && (
           <DropdownMenuItem onSelect={() => router.push('/admin')}>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Admin</span>
+            <span>{t('AppShell.admin')}</span>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onSelect={() => router.push('/profile')}>
           <UserIcon className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+          <span>{t('AppShell.profile')}</span>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => router.push('/settings')}>
           <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
+          <span>{t('AppShell.settings')}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
-          Log out
+          {t('AppShell.logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
-const CollapsedUserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
+const CollapsedUserMenu = ({
+  userRole,
+}: {
+  userRole: 'admin' | 'open' | null;
+}) => {
   const auth = useAuth();
   const router = useRouter();
-  
+  const { t } = useI18n();
+
   const handleLogout = async () => {
     await auth.signOut();
     router.push('/login');
@@ -111,30 +111,30 @@ const CollapsedUserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) 
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-            <UserIcon className="h-5 w-5" />
+          <UserIcon className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('AppShell.myAccount')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {userRole === 'admin' && (
           <DropdownMenuItem onSelect={() => router.push('/admin')}>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Admin</span>
+            <span>{t('AppShell.admin')}</span>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onSelect={() => router.push('/profile')}>
           <UserIcon className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+          <span>{t('AppShell.profile')}</span>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => router.push('/settings')}>
           <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
+          <span>{t('AppShell.settings')}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
-          Log out
+          {t('AppShell.logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -144,11 +144,19 @@ const CollapsedUserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) 
 const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   const pathname = usePathname();
   const { state } = useSidebar();
+  const { t } = useI18n();
+
+  const allNavItems = [
+    { href: '/', label: t('Nav.dashboard'), icon: LayoutDashboard, role: ['admin', 'open'] },
+    { href: '/flights', label: t('Nav.flights'), icon: Plane, role: ['admin', 'open'] },
+    { href: '/fuel', label: t('Nav.fuel'), icon: Fuel, role: ['admin', 'open'] },
+    { href: '/employees', label: t('Nav.employees'), icon: Users, role: ['admin'] },
+  ];
 
   const navItems = React.useMemo(() => {
     if (!userRole) return [];
-    return allNavItems.filter(item => item.role.includes(userRole));
-  }, [userRole]);
+    return allNavItems.filter((item) => item.role.includes(userRole));
+  }, [userRole, t]);
 
   return (
     <Sidebar collapsible="icon">
@@ -179,7 +187,11 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        {state === 'expanded' ? <UserMenu userRole={userRole} /> : <CollapsedUserMenu userRole={userRole} />}
+        {state === 'expanded' ? (
+          <UserMenu userRole={userRole} />
+        ) : (
+          <CollapsedUserMenu userRole={userRole} />
+        )}
       </SidebarFooter>
     </Sidebar>
   );
@@ -191,22 +203,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(null);
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
+    null
+  );
   const [isRoleLoading, setIsRoleLoading] = React.useState(true);
 
-  const adminRef = useMemoFirebase(() => user ? doc(firestore, 'roles_admin', user.uid) : null, [firestore, user]);
+  const adminRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
+    [firestore, user]
+  );
   const { data: adminRoleDoc, isLoading: isAdminLoading } = useDoc(adminRef);
 
-  const openRef = useMemoFirebase(() => user ? doc(firestore, 'roles_open', user.uid) : null, [firestore, user]);
+  const openRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
+    [firestore, user]
+  );
   const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
   React.useEffect(() => {
     const loading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
-    
+
     if (loading) {
       setIsRoleLoading(true);
       return;
-    };
+    }
 
     if (adminRoleDoc) {
       setUserRole('admin');
@@ -221,6 +241,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setIsRoleLoading(false);
   }, [isUserLoading, isAdminLoading, isOpenLoading, adminRoleDoc, openRoleDoc, user]);
 
+
   React.useEffect(() => {
     if (isUserLoading || isRoleLoading) return;
 
@@ -233,14 +254,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, isRoleLoading, pathname, router]);
 
-  if ((isUserLoading || isRoleLoading) && pathname !== '/login' && pathname !== '/signup') {
+  if (
+    (isUserLoading || isRoleLoading) &&
+    pathname !== '/login' &&
+    pathname !== '/signup'
+  ) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-  
+
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   if (isAuthPage) {
     return <>{children}</>;
@@ -251,11 +276,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AppSidebar userRole={userRole} />
       <SidebarInset className="p-4 sm:p-6 lg:p-8">
         <header className="mb-4 flex items-center justify-between md:hidden">
-            <Link href="/" className="flex items-center gap-2">
-                <Logo className="h-7 w-7 text-primary" />
-                <span className="text-lg font-semibold">Skybound</span>
-            </Link>
-            <SidebarTrigger />
+          <Link href="/" className="flex items-center gap-2">
+            <Logo className="h-7 w-7 text-primary" />
+            <span className="text-lg font-semibold">Skybound</span>
+          </Link>
+          <SidebarTrigger />
         </header>
         {children}
       </SidebarInset>

@@ -11,22 +11,36 @@ import {
 } from '@/components/ui/card';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+} from 'firebase/auth';
 import { Badge } from '@/components/ui/badge';
 import { UpdatePasswordForm } from './_components/update-password-form';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/context/i18n-context';
 
 export default function ProfilePage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { t } = useI18n();
 
-  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(null);
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
+    null
+  );
 
-  const adminRef = useMemoFirebase(() => user ? doc(firestore, 'roles_admin', user.uid) : null, [firestore, user]);
+  const adminRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
+    [firestore, user]
+  );
   const { data: adminRoleDoc } = useDoc(adminRef);
 
-  const openRef = useMemoFirebase(() => user ? doc(firestore, 'roles_open', user.uid) : null, [firestore, user]);
+  const openRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
+    [firestore, user]
+  );
   const { data: openRoleDoc } = useDoc(openRef);
 
   React.useEffect(() => {
@@ -39,66 +53,89 @@ export default function ProfilePage() {
     }
   }, [adminRoleDoc, openRoleDoc]);
 
-  const handleUpdatePassword = async (values: { currentPassword: string; newPassword: string }) => {
+  const handleUpdatePassword = async (values: {
+    currentPassword: string;
+    newPassword: string;
+  }) => {
     if (!user || !user.email) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not find user information.' });
-        throw new Error('Missing user info');
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: t('UpdatePasswordForm.errorNoUser'),
+      });
+      throw new Error('Missing user info');
     }
 
     try {
-        const credential = EmailAuthProvider.credential(user.email, values.currentPassword);
-        // Re-authenticate the user to confirm their identity
-        await reauthenticateWithCredential(user, credential);
-        // If re-authentication is successful, update the password
-        await updatePassword(user, values.newPassword);
-        toast({ title: 'Success', description: 'Your password has been updated.' });
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        values.currentPassword
+      );
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, values.newPassword);
+      toast({ title: 'Success', description: t('UpdatePasswordForm.success') });
     } catch (error: any) {
-        let description = 'An unexpected error occurred.';
-        if (error.code === 'auth/wrong-password') {
-            description = 'The current password you entered is incorrect.';
-        } else if (error.code === 'auth/requires-recent-login') {
-            description = 'For your security, please sign in again to change your password.';
-        }
-        toast({ variant: 'destructive', title: 'Password update failed', description });
-        throw error; // Re-throw to be caught by the form handler
+      let description = t('UpdatePasswordForm.unexpectedError');
+      if (error.code === 'auth/wrong-password') {
+        description = t('UpdatePasswordForm.wrongPasswordError');
+      } else if (error.code === 'auth/requires-recent-login') {
+        description = t('UpdatePasswordForm.recentLoginError');
+      }
+      toast({
+        variant: 'destructive',
+        title: t('UpdatePasswordForm.updateFailedTitle'),
+        description,
+      });
+      throw error;
     }
   };
 
-
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Profile" />
+      <PageHeader title={t('ProfilePage.title')} />
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Your Profile</CardTitle>
+            <CardTitle>{t('ProfilePage.yourProfileCardTitle')}</CardTitle>
             <CardDescription>
-              This is your user profile information.
+              {t('ProfilePage.yourProfileCardDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-              <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Email</p>
-                  <p className="text-lg">{user?.email}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">Role</p>
-                {userRole && <Badge variant={userRole === 'admin' ? 'default' : 'secondary'}>{userRole}</Badge>}
-                {!userRole && <p className="text-sm text-muted-foreground">No role assigned.</p>}
-              </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t('ProfilePage.email')}
+              </p>
+              <p className="text-lg">{user?.email}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t('ProfilePage.role')}
+              </p>
+              {userRole && (
+                <Badge variant={userRole === 'admin' ? 'default' : 'secondary'}>
+                  {userRole}
+                </Badge>
+              )}
+              {!userRole && (
+                <p className="text-sm text-muted-foreground">
+                  {t('ProfilePage.noRole')}
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-            <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>
-                    Update your account password here.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <UpdatePasswordForm onSubmit={handleUpdatePassword} />
-            </CardContent>
+          <CardHeader>
+            <CardTitle>{t('ProfilePage.changePasswordCardTitle')}</CardTitle>
+            <CardDescription>
+              {t('ProfilePage.changePasswordCardDescription')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UpdatePasswordForm onSubmit={handleUpdatePassword} />
+          </CardContent>
         </Card>
       </div>
     </div>

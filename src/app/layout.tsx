@@ -3,6 +3,7 @@ import './globals.css';
 import { AppShell } from '@/components/layout/app-shell';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
+import { I18nProvider } from '@/context/i18n-context';
 
 export const metadata: Metadata = {
   title: 'Skybound Manager',
@@ -25,10 +26,12 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
-          <AppShell>{children}</AppShell>
-          <Toaster />
-        </FirebaseClientProvider>
+        <I18nProvider>
+          <FirebaseClientProvider>
+            <AppShell>{children}</AppShell>
+            <Toaster />
+          </FirebaseClientProvider>
+        </I18nProvider>
       </body>
     </html>
   );

@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { useI18n } from '@/context/i18n-context';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,6 +26,7 @@ export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +37,7 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Sign-in failed',
+        title: t('LoginPage.toastFailedTitle'),
         description: error.message,
       });
     } finally {
@@ -47,26 +49,24 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account.
-          </CardDescription>
+          <CardTitle className="text-2xl">{t('LoginPage.title')}</CardTitle>
+          <CardDescription>{t('LoginPage.description')}</CardDescription>
         </CardHeader>
         <form onSubmit={handleSignIn}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('LoginPage.emailLabel')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder={t('LoginPage.emailPlaceholder')}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('LoginPage.passwordLabel')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -78,12 +78,14 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading
+                ? t('LoginPage.signingInButton')
+                : t('LoginPage.signInButton')}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
+              {t('LoginPage.noAccount')}{' '}
               <Link href="/signup" className="underline">
-                Sign up
+                {t('LoginPage.signUpLink')}
               </Link>
             </p>
           </CardFooter>

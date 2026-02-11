@@ -1,3 +1,5 @@
+'use client';
+
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -18,14 +20,11 @@ import { StatsCard } from '@/components/dashboard/stats-card';
 import { FlightHoursChart } from '@/components/dashboard/flight-hours-chart';
 import { MaintenanceSchedule } from '@/components/dashboard/maintenance-schedule';
 import { RecentLogs } from '@/components/dashboard/recent-logs';
-import {
-  flightLogs,
-  fuelLogs,
-  employees,
-  planes,
-} from '@/lib/data';
+import { flightLogs, fuelLogs, employees, planes } from '@/lib/data';
+import { useI18n } from '@/context/i18n-context';
 
 export default function DashboardPage() {
+  const { t } = useI18n();
   const totalFlightHours = flightLogs.reduce(
     (sum, log) => sum + log.flightDuration,
     0
@@ -37,26 +36,26 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Dashboard" />
+      <PageHeader title={t('Dashboard.title')} />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          title="Total Flights"
+          title={t('Dashboard.totalFlights')}
           value={flightLogs.length}
           icon={Plane}
         />
         <StatsCard
-          title="Flight Hours"
+          title={t('Dashboard.flightHours')}
           value={totalFlightHours.toFixed(1)}
           icon={GaugeCircle}
         />
         <StatsCard
-          title="Fuel Pumped (Liters)"
+          title={t('Dashboard.fuelPumped')}
           value={totalFuelPumped.toFixed(0)}
           icon={Fuel}
         />
         <StatsCard
-          title="Active Employees"
+          title={t('Dashboard.activeEmployees')}
           value={activeEmployees}
           icon={Users}
         />
@@ -66,7 +65,7 @@ export default function DashboardPage() {
         <Card className="xl:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base font-medium">
-              Flight Hours by Aircraft
+              {t('Dashboard.flightHoursByAircraft')}
             </CardTitle>
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -78,7 +77,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base font-medium">
-              Maintenance Schedule
+              {t('Dashboard.maintenanceSchedule')}
             </CardTitle>
             <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -90,7 +89,9 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-base font-medium">Recent Logs</CardTitle>
+          <CardTitle className="text-base font-medium">
+            {t('Dashboard.recentLogs')}
+          </CardTitle>
           <Activity className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

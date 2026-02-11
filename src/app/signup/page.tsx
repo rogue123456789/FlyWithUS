@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,6 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { useI18n } from '@/context/i18n-context';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -25,22 +27,23 @@ export default function SignupPage() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-
+      
       toast({
-        title: 'Signup successful',
-        description: 'Your account has been created.',
+        title: t('SignupPage.toastSuccessTitle'),
+        description: t('SignupPage.toastSuccessDescription'),
       });
       router.push('/');
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Sign-up failed',
+        title: t('SignupPage.toastFailedTitle'),
         description: error.message,
       });
     } finally {
@@ -52,26 +55,24 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Sign Up</CardTitle>
-          <CardDescription>
-            Enter your information to create an account.
-          </CardDescription>
+          <CardTitle className="text-2xl">{t('SignupPage.title')}</CardTitle>
+          <CardDescription>{t('SignupPage.description')}</CardDescription>
         </CardHeader>
         <form onSubmit={handleSignUp}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('SignupPage.emailLabel')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder={t('SignupPage.emailPlaceholder')}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('SignupPage.passwordLabel')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -83,12 +84,14 @@ export default function SignupPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {isLoading
+                ? t('SignupPage.creatingAccountButton')
+                : t('SignupPage.createAccountButton')}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{' '}
+              {t('SignupPage.haveAccount')}{' '}
               <Link href="/login" className="underline">
-                Login
+                {t('SignupPage.loginLink')}
               </Link>
             </p>
           </CardFooter>
