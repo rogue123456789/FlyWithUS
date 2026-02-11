@@ -325,6 +325,48 @@
         "reason",
         "batteryStatus"
       ]
+    },
+    "Payment": {
+      "title": "Payment",
+      "type": "object",
+      "description": "Represents a payment record.",
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hasAgency": {
+          "type": "boolean"
+        },
+        "agencyName": {
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": [
+            "Cash",
+            "Card"
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "enum": [
+            "Dollars",
+            "Colones",
+            "Euros"
+          ]
+        },
+        "amount": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "date",
+        "hasAgency",
+        "paymentMethod",
+        "currency",
+        "amount"
+      ]
     }
   },
   "auth": {
@@ -423,6 +465,16 @@
             "$ref": "#/backend/entities/LogbookEntry"
           },
           "description": "Stores individual logbook entries."
+        }
+      },
+      {
+        "path": "/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": {
+            "$ref": "#/backend/entities/Payment"
+          },
+          "description": "Stores payment records. Accessible to admins and open users."
         }
       }
     ]

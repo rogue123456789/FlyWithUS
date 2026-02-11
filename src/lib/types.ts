@@ -69,3 +69,13 @@ export interface LogbookEntry {
   oilTemp: number;
   waterTemp: number;
 }
+
+export interface Payment {
+  id: string;
+  date: string;
+  hasAgency: boolean;
+  agencyName?: string;
+  paymentMethod: 'Cash' | 'Card';
+  currency: 'Dollars' | 'Colones' | 'Euros';
+  amount: number;
+}
