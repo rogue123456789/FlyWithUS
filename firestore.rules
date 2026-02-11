@@ -154,7 +154,7 @@ service cloud.firestore {
       allow get: if isOwner(openUserId);
       allow list: if isAdmin();
       allow create: if isOwner(openUserId) || isAdmin();
-      allow update: if isAdmin();
+      allow update: if isAdmin() || isOwner(openUserId);
       allow delete: if isAdmin();
     }
   }
