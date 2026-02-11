@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   signInWithEmailAndPassword,
-  signInAnonymously,
+  createUserWithEmailAndPassword,
 } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -69,25 +69,51 @@ export default function LoginPage() {
     }
   };
 
+  const GUEST_EMAIL = 'guest@skybound.com';
+  const GUEST_PASSWORD = 'password';
+
   const handleGuestSignIn = async () => {
     setIsLoading(true);
     try {
-      const userCredential = await signInAnonymously(auth);
-      const user = userCredential.user;
-
-      // Assign 'open' role to the guest user
-      await setDoc(doc(firestore, 'roles_open', user.uid), {
-        email: user.email,
-        username: 'Guest',
-      });
-
+      // First, try to sign in as the guest user.
+      await signInWithEmailAndPassword(auth, GUEST_EMAIL, GUEST_PASSWORD);
       router.push('/');
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: t('LoginPage.toastFailedTitle'),
-        description: error.message,
-      });
+      if (
+        error.code === 'auth/user-not-found' ||
+        error.code === 'auth/invalid-credential'
+      ) {
+        // If the guest user doesn't exist, create it.
+        try {
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            GUEST_EMAIL,
+            GUEST_PASSWORD
+          );
+          const user = userCredential.user;
+
+          // Assign 'open' role to the new guest user
+          await setDoc(doc(firestore, 'roles_open', user.uid), {
+            email: user.email,
+            username: 'Guest Account',
+          });
+
+          router.push('/');
+        } catch (creationError: any) {
+          toast({
+            variant: 'destructive',
+            title: t('LoginPage.toastFailedTitle'),
+            description: `Could not create guest account: ${creationError.message}`,
+          });
+        }
+      } else {
+        // Handle other potential sign-in errors
+        toast({
+          variant: 'destructive',
+          title: t('LoginPage.toastFailedTitle'),
+          description: `Guest login failed: ${error.message}`,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
