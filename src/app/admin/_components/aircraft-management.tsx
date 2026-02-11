@@ -10,6 +10,13 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -25,12 +32,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
 import type { Plane } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { AddAircraftForm } from './add-aircraft-form';
 
 type AircraftManagementProps = {
   planes: Plane[];
@@ -41,6 +49,41 @@ export function AircraftManagement({ planes }: AircraftManagementProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const [planeToDelete, setPlaneToDelete] = React.useState<Plane | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
+
+  const handleAddAircraft = async (values: {
+    id: string;
+    name: string;
+    totalHours: number;
+    nextMaintenanceHours: number;
+    engineCheckHours?: number;
+    generalCheckHours?: number;
+  }) => {
+    try {
+      const newAircraft = {
+        name: values.name,
+        totalHours: values.totalHours,
+        nextMaintenanceHours: values.nextMaintenanceHours,
+        engineCheckHours: values.engineCheckHours || 100,
+        generalCheckHours: values.generalCheckHours || 100,
+      };
+      await setDoc(doc(firestore, 'aircrafts', values.id), newAircraft);
+      setIsAddDialogOpen(false);
+      toast({
+        title: t('AddAircraftForm.toastAddedTitle'),
+        description: t('AddAircraftForm.toastAddedDescription', {
+          name: values.name,
+          id: values.id,
+        }),
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
+    }
+  };
 
   const confirmDelete = async () => {
     if (planeToDelete) {
@@ -65,7 +108,23 @@ export function AircraftManagement({ planes }: AircraftManagementProps) {
   };
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              {t('AddAircraftForm.addAircraft')}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('AddAircraftForm.addAircraft')}</DialogTitle>
+            </DialogHeader>
+            <AddAircraftForm onSubmit={handleAddAircraft} />
+          </DialogContent>
+        </Dialog>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -132,6 +191,6 @@ export function AircraftManagement({ planes }: AircraftManagementProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }
