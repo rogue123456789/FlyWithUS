@@ -92,8 +92,8 @@ export function AddLogbookEntryForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: format(new Date(), 'yyyy-MM-dd'),
-      time: format(new Date(), 'HH:mm'),
+      date: '',
+      time: '',
       duration: 0.1,
       startLocation: '',
       endLocation: '',
@@ -106,6 +106,12 @@ export function AddLogbookEntryForm({
   });
 
   const logbookSelection = form.watch('logbookSelection');
+
+  React.useEffect(() => {
+    // Set date and time on the client-side to avoid hydration mismatch
+    form.setValue('date', format(new Date(), 'yyyy-MM-dd'));
+    form.setValue('time', format(new Date(), 'HH:mm'));
+  }, [form]);
 
   function handleFormSubmit(values: z.infer<ReturnType<typeof getFormSchema>>) {
     onSubmit(values);

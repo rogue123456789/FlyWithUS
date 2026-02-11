@@ -67,12 +67,17 @@ export function AddPaymentForm({ onSubmit }: AddPaymentFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: format(new Date(), 'yyyy-MM-dd'),
+      date: '',
       hasAgency: 'no',
     },
   });
 
   const hasAgency = form.watch('hasAgency');
+
+  React.useEffect(() => {
+    // Set default date on client-side to avoid hydration mismatch
+    form.setValue('date', format(new Date(), 'yyyy-MM-dd'));
+  }, [form]);
 
   function handleFormSubmit(values: z.infer<ReturnType<typeof getFormSchema>>) {
     const submissionValues = {
