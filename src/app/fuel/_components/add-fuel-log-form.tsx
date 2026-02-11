@@ -84,9 +84,10 @@ export function AddFuelLogForm({
   const { t } = useI18n();
   const formSchema = getFormSchema(t);
 
-  const form = useForm<z.infer<ReturnType<typeof formSchema>>>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      date: '',
       customerType: 'Company',
       startQuantity: 100,
       liters: 10,
