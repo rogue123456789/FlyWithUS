@@ -23,6 +23,11 @@ import { AircraftManagement } from './_components/aircraft-management';
 import { EmployeeManagement } from './_components/employee-management';
 import { useAuthReady } from '@/context/auth-ready-context';
 
+type RoleUser = {
+  username: string;
+  email: string;
+};
+
 export default function AdminPage() {
   const firestore = useFirestore();
   const { t } = useI18n();
@@ -40,7 +45,7 @@ export default function AdminPage() {
     data: adminUsers,
     isLoading: isAdminLoading,
     error: adminError,
-  } = useCollection(adminUsersCollection);
+  } = useCollection<RoleUser>(adminUsersCollection);
 
   const openUsersCollection = useMemoFirebase(
     () =>
@@ -53,7 +58,7 @@ export default function AdminPage() {
     data: openUsers,
     isLoading: isOpenLoading,
     error: openError,
-  } = useCollection(openUsersCollection);
+  } = useCollection<RoleUser>(openUsersCollection);
 
   const planesCollection = useMemoFirebase(
     () =>
