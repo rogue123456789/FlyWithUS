@@ -30,9 +30,11 @@ import { format } from 'date-fns';
 const getFormSchema = (t: (key: string) => string) =>
   z
     .object({
-      date: z.coerce.date({
-        required_error: t('AddFlightLogForm.dateRequired'),
-      }),
+      date: z
+        .string({
+          required_error: t('AddFlightLogForm.dateRequired'),
+        })
+        .min(1, t('AddFlightLogForm.dateRequired')),
       pilotName: z
         .string()
         .min(2, { message: t('AddFlightLogForm.pilotNameRequired') }),
@@ -89,6 +91,7 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      date: format(new Date(), 'yyyy-MM-dd'),
       pilotName: '',
       flightDuration: 0.1,
       takeoffLocation: '',
@@ -97,10 +100,6 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
       aircraftSelection: 'existing',
     },
   });
-
-  React.useEffect(() => {
-    form.setValue('date', new Date());
-  }, [form]);
 
   const aircraftSelection = form.watch('aircraftSelection');
 
@@ -122,15 +121,7 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
             <FormItem>
               <FormLabel>{t('AddFlightLogForm.date')}</FormLabel>
               <FormControl>
-                <Input
-                  type="date"
-                  {...field}
-                  value={
-                    field.value instanceof Date
-                      ? format(field.value, 'yyyy-MM-dd')
-                      : ''
-                  }
-                />
+                <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

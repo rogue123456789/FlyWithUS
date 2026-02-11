@@ -27,9 +27,11 @@ import { format, parseISO } from 'date-fns';
 
 const getFormSchema = (t: (key: string) => string) =>
   z.object({
-    date: z.coerce.date({
-      required_error: t('AddFlightLogForm.dateRequired'),
-    }),
+    date: z
+      .string({
+        required_error: t('AddFlightLogForm.dateRequired'),
+      })
+      .min(1, t('AddFlightLogForm.dateRequired')),
     pilotName: z
       .string()
       .min(2, { message: t('AddFlightLogForm.pilotNameRequired') }),
@@ -65,7 +67,7 @@ export function EditFlightLogForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: parseISO(log.date),
+      date: format(parseISO(log.date), 'yyyy-MM-dd'),
       pilotName: log.pilotName,
       planeId: log.planeId,
       takeoffLocation: log.takeoffLocation,
@@ -93,15 +95,7 @@ export function EditFlightLogForm({
             <FormItem>
               <FormLabel>{t('AddFlightLogForm.date')}</FormLabel>
               <FormControl>
-                <Input
-                  type="date"
-                  {...field}
-                  value={
-                    field.value instanceof Date
-                      ? format(field.value, 'yyyy-MM-dd')
-                      : ''
-                  }
-                />
+                <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

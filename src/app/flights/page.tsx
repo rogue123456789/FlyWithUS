@@ -228,7 +228,7 @@ export default function FlightsPage() {
       }
 
       const newLog = {
-        date: newLogData.date.toISOString(),
+        date: new Date(newLogData.date + 'T00:00:00').toISOString(),
         pilotName: newLogData.pilotName,
         planeId: planeId,
         takeoffLocation: newLogData.takeoffLocation,
@@ -273,7 +273,7 @@ export default function FlightsPage() {
 
       const logUpdatePayload = {
         ...updatedLogData,
-        date: updatedLogData.date.toISOString(),
+        date: new Date(updatedLogData.date + 'T00:00:00').toISOString(),
       };
       batch.update(logRef, logUpdatePayload);
 
