@@ -67,11 +67,8 @@ import {
 } from '@/firebase';
 import {
   collection,
-  addDoc,
   doc,
-  updateDoc,
   setDoc,
-  deleteDoc,
   writeBatch,
 } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
@@ -214,6 +211,7 @@ export default function FuelPage() {
   const { data: planes } = useCollection<Plane>(planesCollection);
 
   const [logToEdit, setLogToEdit] = React.useState<FuelLog | null>(null);
+  const [logToDelete, setLogToDelete] = React.useState<FuelLog | null>(null);
   const [isClearDialogOpen, setIsClearDialogOpen] = React.useState(false);
   const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
     null
@@ -249,11 +247,91 @@ export default function FuelPage() {
     return [...fuelLogs].sort((a, b) => {
       const dateA = a.date ? new Date(a.date).getTime() : 0;
       const dateB = b.date ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
+      if (dateA !== dateB) return dateB - dateA;
+      // Fallback sort for logs on the same day, could use a timestamp if available
+      return (b.id || '').localeCompare(a.id || '');
     });
   }, [fuelLogs]);
 
+  const recalculateAndCommit = async (
+    baseLogs: FuelLog[],
+    operation: {
+      type: 'add' | 'update' | 'delete';
+      data: any;
+    }
+  ) => {
+    if (!firestore) return;
+
+    let newLogList: FuelLog[] = [...baseLogs];
+    
+    if (operation.type === 'add') {
+      const tempId = `temp-${Date.now()}`;
+      newLogList.push({ ...operation.data, id: tempId });
+    } else if (operation.type === 'update') {
+      newLogList = newLogList.map((log) =>
+        log.id === operation.data.id ? { ...log, ...operation.data } : log
+      );
+    } else if (operation.type === 'delete') {
+      newLogList = newLogList.filter((log) => log.id !== operation.data.id);
+    }
+
+    const sortedLogs = newLogList.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const batch = writeBatch(firestore);
+    let previousLeftover: number | null = null;
+    let initialStartQuantity = sortedLogs.length > 0 ? sortedLogs[0].startQuantity : 0;
+    if (operation.type === 'add' && sortedLogs.length === 1) {
+        initialStartQuantity = operation.data.startQuantity;
+    }
+
+
+    for (const log of sortedLogs) {
+      const startQuantity = previousLeftover ?? (log.id.startsWith('temp-') ? initialStartQuantity : log.startQuantity);
+      const liters = Number(log.liters) || 0;
+      const leftOverQuantity =
+        log.customerType === 'Refueling'
+          ? startQuantity + liters
+          : startQuantity - liters;
+
+      const payload = { ...log, startQuantity, leftOverQuantity };
+      
+      const { id, ...dataForFirestore } = payload;
+      Object.keys(dataForFirestore).forEach(key => {
+        if ((dataForFirestore as any)[key] === undefined) {
+          delete (dataForFirestore as any)[key];
+        }
+      });
+      
+      if (id.startsWith('temp-')) {
+        const newDocRef = doc(collection(firestore, 'fuel_records'));
+        batch.set(newDocRef, dataForFirestore);
+      } else {
+        batch.update(doc(firestore, 'fuel_records', id), dataForFirestore);
+      }
+
+      previousLeftover = leftOverQuantity;
+    }
+    
+    if (operation.type === 'delete') {
+      batch.delete(doc(firestore, 'fuel_records', operation.data.id));
+    }
+
+    try {
+      await batch.commit();
+    } catch (error: any) {
+      console.error("Error committing batch:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error processing fuel logs',
+        description: error.message,
+      });
+    }
+  };
+
   const handleAddFuelLog = async (newLogData: any) => {
+    if (!firestore) return;
     try {
       let planeId;
       if (newLogData.customerType === 'Company') {
@@ -271,19 +349,16 @@ export default function FuelPage() {
         }
       }
 
-      const start = Number(newLogData.startQuantity);
-      const taken = Number(newLogData.liters);
-
-      const newLog = {
-        date: newLogData.date,
-        customerType: newLogData.customerType,
-        planeId: planeId,
-        startQuantity: start,
-        liters: taken,
-        leftOverQuantity: start - taken,
+      const isFirstLog = !fuelLogs || fuelLogs.length === 0;
+      const data = {
+          ...newLogData,
+          planeId,
+          startQuantity: isFirstLog ? Number(newLogData.startQuantity) : 0,
       };
 
-      await addDoc(collection(firestore, 'fuel_records'), newLog);
+      await recalculateAndCommit(fuelLogs ?? [], { type: 'add', data });
+      toast({ title: t('AddFuelLogForm.toastLoggedTitle') });
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -293,48 +368,30 @@ export default function FuelPage() {
     }
   };
 
-  const handleAddRefuelLog = async (newRefuelData: any) => {
-    try {
-      const lastLog = sortedFuelLogs[0];
-      const currentQuantity = lastLog ? lastLog.leftOverQuantity : 0;
-      const litersRefueled = Number(newRefuelData.litersRefueled);
-
-      const newLog = {
-        id: `ful${Date.now()}`,
-        date: newRefuelData.date,
-        customerType: 'Refueling',
-        planeId: 'N/A',
-        startQuantity: currentQuantity,
-        liters: litersRefueled,
-        leftOverQuantity: currentQuantity + litersRefueled,
-        cost: newRefuelData.cost,
-      };
-      await addDoc(collection(firestore, 'fuel_records'), newLog);
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message,
-      });
-    }
+   const handleAddRefuelLog = async (newRefuelData: any) => {
+    const data = {
+      date: newRefuelData.date,
+      customerType: 'Refueling',
+      planeId: 'N/A',
+      startQuantity: 0, 
+      liters: Number(newRefuelData.litersRefueled),
+      cost: newRefuelData.cost,
+    };
+    await recalculateAndCommit(fuelLogs ?? [], { type: 'add', data });
+    toast({ title: t('AddRefuelLogForm.toastLoggedTitle') });
   };
-
+  
   const handleUpdateFuelLog = async (updatedLogData: any) => {
-    try {
-      const logRef = doc(firestore, 'fuel_records', updatedLogData.id);
-      await updateDoc(logRef, updatedLogData);
-      toast({
-        title: t('FuelPage.toastUpdatedTitle'),
-        description: t('FuelPage.toastUpdatedDescription'),
-      });
-      setLogToEdit(null);
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message,
-      });
-    }
+    await recalculateAndCommit(fuelLogs ?? [], { type: 'update', data: updatedLogData });
+    toast({ title: t('FuelPage.toastUpdatedTitle') });
+    setLogToEdit(null);
+  };
+  
+  const handleDeleteFuelLog = async () => {
+    if (!logToDelete) return;
+    await recalculateAndCommit(fuelLogs ?? [], { type: 'delete', data: logToDelete });
+    toast({ title: t('FuelPage.toastDeletedTitle') });
+    setLogToDelete(null);
   };
 
   const handleExport = () => {
@@ -471,6 +528,13 @@ export default function FuelPage() {
                           <Pencil className="mr-2 h-4 w-4" />
                           {t('FuelPage.edit')}
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => setLogToDelete(log)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {t('FuelPage.delete')}
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -501,6 +565,31 @@ export default function FuelPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={!!logToDelete}
+        onOpenChange={(open) => !open && setLogToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('FuelPage.deleteDialogTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('FuelPage.deleteDialogDescription', { logId: logToDelete?.id })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('FuelPage.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFuelLog}>
+              {t('FuelPage.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {logToEdit && (
         <EditFuelLogDialog
           log={logToEdit}

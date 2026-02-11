@@ -293,6 +293,7 @@ export const translations = {
       tableLeftOver: 'Left Over (L)',
       tableActions: 'Actions',
       edit: 'Edit',
+      delete: 'Delete',
       addLogDialogTitle: 'Log a New Fuel Transaction',
       addLogDialogDescription:
         'Fill in the details for the fuel transaction.',
@@ -309,6 +310,9 @@ export const translations = {
       toastClearingTitle: 'Clearing Logs...',
       toastClearedTitle: 'All Fuel Logs Cleared',
       toastClearErrorTitle: 'Error Clearing Logs',
+      deleteDialogTitle: 'Are you sure?',
+      deleteDialogDescription: 'This will permanently delete fuel log {logId}.',
+      toastDeletedTitle: 'Fuel Log Deleted',
     },
     AddFuelLogForm: {
       date: 'Date',
@@ -712,6 +716,7 @@ export const translations = {
       tableLeftOver: 'Sobrante (L)',
       tableActions: 'Acciones',
       edit: 'Editar',
+      delete: 'Eliminar',
       addLogDialogTitle: 'Registrar una Nueva Transacción de Combustible',
       addLogDialogDescription:
         'Completa los detalles para la transacción de combustible.',
@@ -730,6 +735,10 @@ export const translations = {
       toastClearingTitle: 'Borrando registros...',
       toastClearedTitle: 'Todos los Registros de Combustible Borrados',
       toastClearErrorTitle: 'Error al Borrar los Registros',
+      deleteDialogTitle: '¿Estás seguro?',
+      deleteDialogDescription:
+        'Esto eliminará permanentemente el registro de combustible {logId}.',
+      toastDeletedTitle: 'Registro de Combustible Eliminado',
     },
     AddFuelLogForm: {
       date: 'Fecha',

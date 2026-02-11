@@ -79,7 +79,9 @@ type EditFuelLogFormProps = {
   log: FuelLog;
   planes: Plane[];
   onSubmit: (
-    values: z.infer<ReturnType<typeof getFormSchema>> & { leftOverQuantity: number }
+    values: z.infer<ReturnType<typeof getFormSchema>> & {
+      leftOverQuantity: number;
+    }
   ) => void;
 };
 
@@ -95,7 +97,7 @@ export function EditFuelLogForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: log.date,
+      date: log.date.slice(0, 10),
       customerType: log.customerType,
       aircraftSelection: isExistingPlane ? 'existing' : 'new',
       planeId: isExistingPlane ? log.planeId : undefined,
@@ -131,7 +133,15 @@ export function EditFuelLogForm({
       ...values,
       leftOverQuantity: parseFloat(leftOverQuantity),
     };
-    onSubmit(finalValues);
+
+    const cleanValues: { [key: string]: any } = {};
+    for (const key in finalValues) {
+      if ((finalValues as any)[key] !== undefined) {
+        cleanValues[key] = (finalValues as any)[key];
+      }
+    }
+
+    onSubmit(cleanValues as any);
     form.reset();
   }
 
