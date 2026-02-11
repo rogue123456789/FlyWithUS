@@ -273,7 +273,10 @@ export default function FuelPage() {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       if (dateA !== dateB) return dateA - dateB;
-      return (a.id || '').localeCompare(b.id || '');
+      // If dates are the same, sort by original ID to keep order for same-day entries
+      const idA = a.id.startsWith('temp-') ? Infinity : parseInt(a.id, 36) || 0;
+      const idB = b.id.startsWith('temp-') ? Infinity : parseInt(b.id, 36) || 0;
+      return idA - idB;
     });
 
     const batch = writeBatch(firestore);
@@ -282,14 +285,21 @@ export default function FuelPage() {
       sortedLogs.length > 0 ? sortedLogs[0].startQuantity : 0;
     if (operation.type === 'add' && sortedLogs.length === 1) {
       initialStartQuantity = operation.data.startQuantity;
+    } else if (fuelLogs?.length === 0 && operation.type === 'add') {
+      initialStartQuantity = operation.data.startQuantity;
+    } else if (fuelLogs && fuelLogs.length > 0) {
+      // Find the absolute first log to get a stable starting point
+      const absoluteFirstLog = [...fuelLogs].sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+        return (a.id || '').localeCompare(b.id || '');
+      })[0];
+      initialStartQuantity = absoluteFirstLog.startQuantity;
     }
 
     for (const log of sortedLogs) {
-      const startQuantity =
-        previousLeftover ??
-        (log.id.startsWith('temp-')
-          ? initialStartQuantity
-          : log.startQuantity);
+      const startQuantity = previousLeftover ?? initialStartQuantity;
       const liters = Number(log.liters) || 0;
       const leftOverQuantity =
         log.customerType === 'Refueling'
@@ -328,6 +338,8 @@ export default function FuelPage() {
         title: 'Error processing fuel logs',
         description: error.message,
       });
+      // Re-throw to be caught by the calling function's catch block
+      throw error;
     }
   };
 
@@ -382,22 +394,32 @@ export default function FuelPage() {
   };
 
   const handleUpdateFuelLog = async (updatedLogData: any) => {
-    await recalculateAndCommit(fuelLogs ?? [], {
-      type: 'update',
-      data: updatedLogData,
-    });
-    toast({ title: t('FuelPage.toastUpdatedTitle') });
-    setLogToEdit(null);
+    try {
+      await recalculateAndCommit(fuelLogs ?? [], {
+        type: 'update',
+        data: updatedLogData,
+      });
+      toast({ title: t('FuelPage.toastUpdatedTitle') });
+    } catch (error: any) {
+      // Error is already toasted in recalculateAndCommit
+    } finally {
+      setLogToEdit(null);
+    }
   };
 
   const handleDeleteFuelLog = async () => {
     if (!logToDelete) return;
-    await recalculateAndCommit(fuelLogs ?? [], {
-      type: 'delete',
-      data: logToDelete,
-    });
-    toast({ title: t('FuelPage.toastDeletedTitle') });
-    setLogToDelete(null);
+    try {
+      await recalculateAndCommit(fuelLogs ?? [], {
+        type: 'delete',
+        data: logToDelete,
+      });
+      toast({ title: t('FuelPage.toastDeletedTitle') });
+    } catch (error: any) {
+      // Error is already toasted in recalculateAndCommit
+    } finally {
+      setLogToDelete(null);
+    }
   };
 
   const handleExport = () => {
