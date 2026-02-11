@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -61,6 +62,7 @@ export function EmployeeManagement({ employees }: EmployeeManagementProps) {
   const { t } = useI18n();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const router = useRouter();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [employeeToDelete, setEmployeeToDelete] = React.useState<Employee | null>(
     null
@@ -108,6 +110,7 @@ export function EmployeeManagement({ employees }: EmployeeManagementProps) {
         });
       } finally {
         setEmployeeToDelete(null);
+        router.refresh();
       }
     }
   };

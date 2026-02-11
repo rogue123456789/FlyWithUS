@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -48,6 +49,7 @@ export function AircraftManagement({ planes }: AircraftManagementProps) {
   const { t } = useI18n();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const router = useRouter();
   const [planeToDelete, setPlaneToDelete] = React.useState<Plane | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
 
@@ -103,6 +105,7 @@ export function AircraftManagement({ planes }: AircraftManagementProps) {
         });
       } finally {
         setPlaneToDelete(null);
+        router.refresh();
       }
     }
   };

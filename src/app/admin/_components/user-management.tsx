@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -55,6 +56,7 @@ export function UserManagement({ users }: UserManagementProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const { t } = useI18n();
+  const router = useRouter();
   const [userToDelete, setUserToDelete] = React.useState<User | null>(null);
 
   const handleRoleChange = async (
@@ -118,6 +120,7 @@ export function UserManagement({ users }: UserManagementProps) {
       });
     } finally {
       setUserToDelete(null);
+      router.refresh();
     }
   };
 

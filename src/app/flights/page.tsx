@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -154,6 +155,7 @@ export default function FlightsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const isAuthReady = useAuthReady();
+  const router = useRouter();
 
   const flightLogsCollection = useMemoFirebase(
     () =>
@@ -344,6 +346,7 @@ export default function FlightsPage() {
       });
     } finally {
       setLogToDelete(null);
+      router.refresh();
     }
   };
 
@@ -388,6 +391,7 @@ export default function FlightsPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
+      router.refresh();
     }
   };
 

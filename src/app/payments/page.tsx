@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -77,6 +78,7 @@ export default function PaymentsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const isAuthReady = useAuthReady();
+  const router = useRouter();
   const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
     null
   );
@@ -159,6 +161,7 @@ export default function PaymentsPage() {
         });
       } finally {
         setPaymentToDelete(null);
+        router.refresh();
       }
     }
   };
@@ -188,6 +191,7 @@ export default function PaymentsPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
+      router.refresh();
     }
   };
   const handleExport = () => {

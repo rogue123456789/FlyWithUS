@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -105,6 +106,7 @@ export default function LogbookPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const isAuthReady = useAuthReady();
+  const router = useRouter();
   const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
     null
   );
@@ -272,6 +274,7 @@ export default function LogbookPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
+      router.refresh();
     }
   };
 

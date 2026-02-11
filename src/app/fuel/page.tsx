@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -186,6 +187,7 @@ export default function FuelPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const isAuthReady = useAuthReady();
+  const router = useRouter();
 
   const fuelLogsCollection = useMemoFirebase(
     () =>
@@ -419,6 +421,7 @@ export default function FuelPage() {
       // Error is already toasted in recalculateAndCommit
     } finally {
       setLogToDelete(null);
+      router.refresh();
     }
   };
 
@@ -455,6 +458,7 @@ export default function FuelPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
+      router.refresh();
     }
   };
 
