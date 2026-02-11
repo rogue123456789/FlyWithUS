@@ -47,7 +47,7 @@ export const translations = {
       tableReason: 'Reason',
       toastAddedTitle: 'Logbook Entry Recorded',
       toastAddedDescription:
-        'Successfully recorded new entry for logbook {logbookId}.',
+        'Successfully recorded new entry for {logbookName}.',
     },
     AddLogbookEntryForm: {
       date: 'Date',
@@ -57,8 +57,6 @@ export const translations = {
       newLogbook: 'New Logbook',
       selectLogbook: 'Select Logbook',
       selectLogbookPlaceholder: 'Select a logbook',
-      newLogbookId: 'New Logbook ID',
-      newLogbookIdPlaceholder: 'e.g. Vehicle-01',
       newLogbookName: 'New Logbook Name',
       newLogbookNamePlaceholder: 'e.g. Truck 1',
       currentHourCounter: 'Current Hour Counter',
@@ -542,7 +540,7 @@ export const translations = {
       tableReason: 'Razón',
       toastAddedTitle: 'Entrada de Bitácora Registrada',
       toastAddedDescription:
-        'Nueva entrada para la bitácora {logbookId} registrada con éxito.',
+        'Nueva entrada para la bitácora {logbookName} registrada con éxito.',
     },
     AddLogbookEntryForm: {
       date: 'Fecha',
@@ -552,8 +550,6 @@ export const translations = {
       newLogbook: 'Bitácora Nueva',
       selectLogbook: 'Seleccionar Bitácora',
       selectLogbookPlaceholder: 'Selecciona una bitácora',
-      newLogbookId: 'ID de Bitácora Nueva',
-      newLogbookIdPlaceholder: 'ej. Vehiculo-01',
       newLogbookName: 'Nombre de Bitácora Nueva',
       newLogbookNamePlaceholder: 'ej. Camión 1',
       currentHourCounter: 'Contador de Horas Actual',

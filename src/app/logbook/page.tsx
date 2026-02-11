@@ -120,15 +120,18 @@ export default function LogbookPage() {
     try {
       let logbookId;
       if (newEntryData.logbookSelection === 'new') {
-        logbookId = newEntryData.newLogbookId;
         const currentHours = newEntryData.currentHourCounter || 0;
-        const newLogbook = {
+        const newLogbookData = {
           name: newEntryData.newLogbookName,
           totalHours: currentHours + newEntryData.duration,
           engineCheckHours: newEntryData.engineCheckHours,
           generalCheckHours: newEntryData.generalCheckHours,
         };
-        await setDoc(doc(firestore, 'logbooks', logbookId), newLogbook);
+        const newLogbookRef = await addDoc(
+          collection(firestore, 'logbooks'),
+          newLogbookData
+        );
+        logbookId = newLogbookRef.id;
       } else {
         logbookId = newEntryData.logbookId;
         const logbookRef = doc(firestore, 'logbooks', logbookId);
@@ -151,10 +154,15 @@ export default function LogbookPage() {
       };
       await addDoc(collection(firestore, 'logbook_entries'), newEntry);
 
+      const logbookName =
+        newEntryData.logbookSelection === 'new'
+          ? newEntryData.newLogbookName
+          : logbooks?.find((lb) => lb.id === logbookId)?.name;
+
       toast({
         title: t('LogbookPage.toastAddedTitle'),
         description: t('LogbookPage.toastAddedDescription', {
-          logbookId: logbookId,
+          logbookName: logbookName || logbookId,
         }),
       });
     } catch (error: any) {

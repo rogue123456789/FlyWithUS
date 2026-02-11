@@ -35,7 +35,6 @@ const getFormSchema = (t: (key: string) => string) =>
         .min(1, t('AddLogbookEntryForm.dateRequired')),
       logbookSelection: z.enum(['existing', 'new']).default('existing'),
       logbookId: z.string().optional(),
-      newLogbookId: z.string().optional(),
       newLogbookName: z.string().optional(),
       currentHourCounter: z.coerce.number().optional(),
       engineCheckHours: z.coerce.number().optional(),
@@ -65,12 +64,7 @@ const getFormSchema = (t: (key: string) => string) =>
           return !!data.logbookId;
         }
         if (data.logbookSelection === 'new') {
-          return (
-            data.newLogbookId &&
-            data.newLogbookId.length > 1 &&
-            data.newLogbookName &&
-            data.newLogbookName.length > 1
-          );
+          return data.newLogbookName && data.newLogbookName.length > 1;
         }
         return true;
       },
@@ -205,50 +199,27 @@ export function AddLogbookEntryForm({
 
         {logbookSelection === 'new' && (
           <div className="space-y-4 rounded-md border p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="newLogbookId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('AddLogbookEntryForm.newLogbookId')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t(
-                          'AddLogbookEntryForm.newLogbookIdPlaceholder'
-                        )}
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="newLogbookName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('AddLogbookEntryForm.newLogbookName')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t(
-                          'AddLogbookEntryForm.newLogbookNamePlaceholder'
-                        )}
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="newLogbookName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {t('AddLogbookEntryForm.newLogbookName')}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t(
+                        'AddLogbookEntryForm.newLogbookNamePlaceholder'
+                      )}
+                      {...field}
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="currentHourCounter"
