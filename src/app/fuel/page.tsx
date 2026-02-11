@@ -26,6 +26,7 @@ import {
   Fuel,
   MoreHorizontal,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 import { AddFuelLogForm } from './_components/add-fuel-log-form';
 import { AddRefuelLogForm } from './_components/add-refuel-log-form';
@@ -39,6 +40,16 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -47,8 +58,8 @@ import {
 import { format, parseISO } from 'date-fns';
 import { downloadCsv } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, addDoc, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 
 const AddFuelLogDialog = ({
@@ -166,6 +177,7 @@ const EditFuelLogDialog = ({
 
 export default function FuelPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const fuelLogsCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'fuel_records') : null),
@@ -180,8 +192,34 @@ export default function FuelPage() {
   const { data: planes } = useCollection<Plane>(planesCollection);
 
   const [logToEdit, setLogToEdit] = React.useState<FuelLog | null>(null);
+  const [isClearDialogOpen, setIsClearDialogOpen] = React.useState(false);
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
+    null
+  );
   const { toast } = useToast();
   const { t } = useI18n();
+
+  const adminRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: adminRoleDoc } = useDoc(adminRef);
+
+  const openRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: openRoleDoc } = useDoc(openRef);
+
+  React.useEffect(() => {
+    if (adminRoleDoc) {
+      setUserRole('admin');
+    } else if (openRoleDoc) {
+      setUserRole('open');
+    } else {
+      setUserRole(null);
+    }
+  }, [adminRoleDoc, openRoleDoc]);
 
   const sortedFuelLogs = React.useMemo(() => {
     if (!fuelLogs) return [];
@@ -271,6 +309,33 @@ export default function FuelPage() {
     );
   };
 
+  const handleClearAllFuelLogs = async () => {
+    if (!firestore || !fuelLogs || fuelLogs.length === 0) {
+      toast({ title: t('FuelPage.toastNoLogs') });
+      setIsClearDialogOpen(false);
+      return;
+    }
+
+    toast({ title: t('FuelPage.toastClearingTitle') });
+
+    try {
+      const deletePromises = fuelLogs.map((log) =>
+        deleteDoc(doc(firestore, 'fuel_records', log.id))
+      );
+      await Promise.all(deletePromises);
+      toast({ title: t('FuelPage.toastClearedTitle') });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('FuelPage.toastClearErrorTitle'),
+        description: error.message,
+      });
+    } finally {
+      setIsClearDialogOpen(false);
+    }
+  };
+
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -281,6 +346,15 @@ export default function FuelPage() {
               <Download className="mr-2 h-4 w-4" />
               {t('FuelPage.export')}
             </Button>
+            {userRole === 'admin' && (
+              <Button
+                variant="destructive"
+                onClick={() => setIsClearDialogOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('FuelPage.clearAll')}
+              </Button>
+            )}
             <AddRefuelLogDialog onAddRefuelLog={handleAddRefuelLog} />
             <AddFuelLogDialog
               onAddFuelLog={handleAddFuelLog}
@@ -365,6 +439,27 @@ export default function FuelPage() {
           </Table>
         </CardContent>
       </Card>
+      <AlertDialog
+        open={isClearDialogOpen}
+        onOpenChange={setIsClearDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('FuelPage.clearDialogTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('FuelPage.clearDialogDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('FuelPage.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAllFuelLogs}>
+              {t('AircraftManagement.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {logToEdit && (
         <EditFuelLogDialog
           log={logToEdit}

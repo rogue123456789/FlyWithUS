@@ -55,7 +55,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { downloadCsv } from '@/lib/utils';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import {
   collection,
   doc,
@@ -143,6 +143,7 @@ export default function FlightsPage() {
   const { toast } = useToast();
   const { t } = useI18n();
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const flightLogsCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'flight_logs') : null),
@@ -158,6 +159,32 @@ export default function FlightsPage() {
 
   const [logToEdit, setLogToEdit] = React.useState<FlightLog | null>(null);
   const [logToDelete, setLogToDelete] = React.useState<FlightLog | null>(null);
+  const [isClearDialogOpen, setIsClearDialogOpen] = React.useState(false);
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
+    null
+  );
+
+  const adminRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: adminRoleDoc } = useDoc(adminRef);
+
+  const openRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: openRoleDoc } = useDoc(openRef);
+
+  React.useEffect(() => {
+    if (adminRoleDoc) {
+      setUserRole('admin');
+    } else if (openRoleDoc) {
+      setUserRole('open');
+    } else {
+      setUserRole(null);
+    }
+  }, [adminRoleDoc, openRoleDoc]);
 
   const handleAddFlightLog = async (newLogData: any) => {
     if (!firestore) return;
@@ -257,6 +284,50 @@ export default function FlightsPage() {
       setLogToDelete(null);
     }
   };
+  
+  const handleClearAllFlightLogs = async () => {
+    if (!firestore || !flightLogs || flightLogs.length === 0) {
+      toast({ title: t('FlightsPage.toastNoLogs') });
+      setIsClearDialogOpen(false);
+      return;
+    }
+
+    toast({ title: t('FlightsPage.toastClearingTitle') });
+
+    try {
+      const updates: { [planeId: string]: number } = {};
+      flightLogs.forEach((log) => {
+        if (updates[log.planeId]) {
+          updates[log.planeId] -= log.flightDuration;
+        } else {
+          updates[log.planeId] = -log.flightDuration;
+        }
+      });
+
+      const updatePromises = Object.keys(updates).map((planeId) => {
+        const planeRef = doc(firestore, 'aircrafts', planeId);
+        return updateDoc(planeRef, {
+          totalHours: increment(updates[planeId]),
+        });
+      });
+
+      const deletePromises = flightLogs.map((log) =>
+        deleteDoc(doc(firestore, 'flight_logs', log.id))
+      );
+
+      await Promise.all([...updatePromises, ...deletePromises]);
+
+      toast({ title: t('FlightsPage.toastClearedTitle') });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('FlightsPage.toastClearErrorTitle'),
+        description: error.message,
+      });
+    } finally {
+      setIsClearDialogOpen(false);
+    }
+  };
 
   const sortedFlightLogs = React.useMemo(() => {
     if (!flightLogs) return [];
@@ -283,6 +354,12 @@ export default function FlightsPage() {
               <Download className="mr-2 h-4 w-4" />
               {t('FlightsPage.export')}
             </Button>
+            {userRole === 'admin' && (
+               <Button variant="destructive" onClick={() => setIsClearDialogOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('FlightsPage.clearAll')}
+              </Button>
+            )}
             <AddFlightLogDialog
               onAddFlightLog={handleAddFlightLog}
               planes={planes ?? []}
@@ -362,6 +439,27 @@ export default function FlightsPage() {
           onOpenChange={(open) => !open && setLogToEdit(null)}
         />
       )}
+      <AlertDialog
+        open={isClearDialogOpen}
+        onOpenChange={setIsClearDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('FlightsPage.clearDialogTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('FlightsPage.clearDialogDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('FlightsPage.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAllFlightLogs}>
+              {t('AircraftManagement.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {logToDelete && (
         <AlertDialog
           open={!!logToDelete}

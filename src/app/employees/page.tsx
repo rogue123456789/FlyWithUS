@@ -28,7 +28,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import {
   collection,
   doc,
@@ -109,6 +109,7 @@ function LiveTimer({ startTime }: { startTime: string }) {
 
 export default function EmployeesPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const employeesCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'employees') : null),
@@ -129,8 +130,34 @@ export default function EmployeesPage() {
   const [workLogToDelete, setWorkLogToDelete] = React.useState<WorkLog | null>(
     null
   );
+  const [isClearDialogOpen, setIsClearDialogOpen] = React.useState(false);
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
+    null
+  );
   const { toast } = useToast();
   const { t } = useI18n();
+
+  const adminRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: adminRoleDoc } = useDoc(adminRef);
+
+  const openRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: openRoleDoc } = useDoc(openRef);
+
+  React.useEffect(() => {
+    if (adminRoleDoc) {
+      setUserRole('admin');
+    } else if (openRoleDoc) {
+      setUserRole('open');
+    } else {
+      setUserRole(null);
+    }
+  }, [adminRoleDoc, openRoleDoc]);
 
   const selectedEmployee = employees?.find((e) => e.id === selectedEmployeeId);
 
@@ -291,6 +318,32 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleClearAllWorkLogs = async () => {
+    if (!firestore || !workLogs || workLogs.length === 0) {
+      toast({ title: t('EmployeesPage.toastNoLogs') });
+      setIsClearDialogOpen(false);
+      return;
+    }
+
+    toast({ title: t('EmployeesPage.toastClearingTitle') });
+
+    try {
+      const deletePromises = workLogs.map((log) =>
+        deleteDoc(doc(firestore, 'work_logs', log.id))
+      );
+      await Promise.all(deletePromises);
+      toast({ title: t('EmployeesPage.toastClearedTitle') });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('EmployeesPage.toastClearErrorTitle'),
+        description: error.message,
+      });
+    } finally {
+      setIsClearDialogOpen(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -300,6 +353,15 @@ export default function EmployeesPage() {
             <Button variant="outline" onClick={handleExport}>
               <Download /> {t('EmployeesPage.export')}
             </Button>
+            {userRole === 'admin' && (
+              <Button
+                variant="destructive"
+                onClick={() => setIsClearDialogOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('EmployeesPage.clearAll')}
+              </Button>
+            )}
           </div>
         }
       />
@@ -477,6 +539,28 @@ export default function EmployeesPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      <AlertDialog
+        open={isClearDialogOpen}
+        onOpenChange={setIsClearDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('EmployeesPage.clearDialogTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('EmployeesPage.clearDialogDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('EmployeesPage.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAllWorkLogs}>
+              {t('AircraftManagement.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {workLogToDelete && (
         <AlertDialog
