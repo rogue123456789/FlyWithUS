@@ -25,6 +25,7 @@ import type { Plane } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useI18n } from '@/context/i18n-context';
+import { format } from 'date-fns';
 
 const getFormSchema = (t: (key: string) => string) =>
   z
@@ -103,7 +104,7 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
 
   const aircraftSelection = form.watch('aircraftSelection');
 
-  function handleFormSubmit(values: z.infer<typeof formSchema>) {
+  function handleFormSubmit(values: z.infer<ReturnType<typeof getFormSchema>>) {
     onSubmit(values);
     form.reset();
   }
@@ -126,7 +127,7 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
                   {...field}
                   value={
                     field.value instanceof Date
-                      ? field.value.toISOString().slice(0, 10)
+                      ? format(field.value, 'yyyy-MM-dd')
                       : ''
                   }
                 />

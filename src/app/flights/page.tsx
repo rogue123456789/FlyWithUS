@@ -254,10 +254,53 @@ export default function FlightsPage() {
   };
 
   const handleUpdateFlightLog = async (updatedLogData: any) => {
-    if (!firestore) return;
+    if (!firestore || !flightLogs) return;
+
+    const originalLog = flightLogs.find((log) => log.id === updatedLogData.id);
+    if (!originalLog) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Original log not found.',
+      });
+      return;
+    }
+
     try {
       const logRef = doc(firestore, 'flight_logs', updatedLogData.id);
-      await updateDoc(logRef, updatedLogData);
+
+      const batch = writeBatch(firestore);
+
+      const logUpdatePayload = {
+        ...updatedLogData,
+        date: updatedLogData.date.toISOString(),
+      };
+      batch.update(logRef, logUpdatePayload);
+
+      const originalDuration = originalLog.flightDuration;
+      const newDuration = updatedLogData.flightDuration;
+      const originalPlaneId = originalLog.planeId;
+      const newPlaneId = updatedLogData.planeId;
+
+      if (originalPlaneId === newPlaneId) {
+        const durationChange = newDuration - originalDuration;
+        if (durationChange !== 0) {
+          const planeRef = doc(firestore, 'aircrafts', newPlaneId);
+          batch.update(planeRef, { totalHours: increment(durationChange) });
+        }
+      } else {
+        // Revert hours on old plane
+        const oldPlaneRef = doc(firestore, 'aircrafts', originalPlaneId);
+        batch.update(oldPlaneRef, {
+          totalHours: increment(-originalDuration),
+        });
+
+        // Add hours to new plane
+        const newPlaneRef = doc(firestore, 'aircrafts', newPlaneId);
+        batch.update(newPlaneRef, { totalHours: increment(newDuration) });
+      }
+
+      await batch.commit();
 
       toast({
         title: t('FlightsPage.toastUpdatedTitle'),

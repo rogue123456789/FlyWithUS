@@ -22,56 +22,31 @@ import {
 } from '@/components/ui/select';
 import type { Plane, FlightLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useI18n } from '@/context/i18n-context';
+import { format, parseISO } from 'date-fns';
 
 const getFormSchema = (t: (key: string) => string) =>
-  z
-    .object({
-      date: z.string().min(1, t('AddFlightLogForm.dateRequired')),
-      pilotName: z
-        .string()
-        .min(2, { message: t('AddFlightLogForm.pilotNameRequired') }),
-      aircraftSelection: z.enum(['existing', 'new']).default('existing'),
-      planeId: z.string().optional(),
-      newPlaneId: z.string().optional(),
-      newPlaneName: z.string().optional(),
-      currentHourCounter: z.coerce.number().optional(),
-      engineCheckHours: z.coerce.number().optional(),
-      generalCheckHours: z.coerce.number().optional(),
-      takeoffLocation: z
-        .string()
-        .min(2, { message: t('AddFlightLogForm.takeoffLocationRequired') }),
-      landingLocation: z
-        .string()
-        .min(2, { message: t('AddFlightLogForm.landingLocationRequired') }),
-      flightDuration: z.coerce
-        .number()
-        .min(0.1, { message: t('AddFlightLogForm.flightDurationError') }),
-      flightReason: z
-        .string()
-        .min(2, { message: t('AddFlightLogForm.flightReasonRequired') }),
-    })
-    .refine(
-      (data) => {
-        if (data.aircraftSelection === 'existing') {
-          return !!data.planeId;
-        }
-        if (data.aircraftSelection === 'new') {
-          return (
-            data.newPlaneId &&
-            data.newPlaneId.length > 1 &&
-            data.newPlaneName &&
-            data.newPlaneName.length > 1
-          );
-        }
-        return true;
-      },
-      {
-        message: t('AddFlightLogForm.aircraftSelectionError'),
-        path: ['aircraftSelection'],
-      }
-    );
+  z.object({
+    date: z.coerce.date({
+      required_error: t('AddFlightLogForm.dateRequired'),
+    }),
+    pilotName: z
+      .string()
+      .min(2, { message: t('AddFlightLogForm.pilotNameRequired') }),
+    planeId: z.string().min(1, { message: 'Aircraft is required.' }),
+    takeoffLocation: z
+      .string()
+      .min(2, { message: t('AddFlightLogForm.takeoffLocationRequired') }),
+    landingLocation: z
+      .string()
+      .min(2, { message: t('AddFlightLogForm.landingLocationRequired') }),
+    flightDuration: z.coerce
+      .number()
+      .min(0.1, { message: t('AddFlightLogForm.flightDurationError') }),
+    flightReason: z
+      .string()
+      .min(2, { message: t('AddFlightLogForm.flightReasonRequired') }),
+  });
 
 type EditFlightLogFormProps = {
   log: FlightLog;
@@ -86,25 +61,19 @@ export function EditFlightLogForm({
 }: EditFlightLogFormProps) {
   const { t } = useI18n();
   const formSchema = getFormSchema(t);
-  const isExistingPlane = planes.some((p) => p.id === log.planeId);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: log.date,
+      date: parseISO(log.date),
       pilotName: log.pilotName,
-      aircraftSelection: isExistingPlane ? 'existing' : 'new',
-      planeId: isExistingPlane ? log.planeId : undefined,
-      newPlaneId: isExistingPlane ? undefined : log.planeId,
-      newPlaneName: '',
+      planeId: log.planeId,
       takeoffLocation: log.takeoffLocation,
       landingLocation: log.landingLocation,
       flightDuration: log.flightDuration,
       flightReason: log.flightReason,
     },
   });
-
-  const aircraftSelection = form.watch('aircraftSelection');
 
   function handleFormSubmit(values: z.infer<typeof formSchema>) {
     onSubmit(values);
@@ -124,7 +93,15 @@ export function EditFlightLogForm({
             <FormItem>
               <FormLabel>{t('AddFlightLogForm.date')}</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Input
+                  type="date"
+                  {...field}
+                  value={
+                    field.value instanceof Date
+                      ? format(field.value, 'yyyy-MM-dd')
+                      : ''
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -146,187 +123,38 @@ export function EditFlightLogForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
-          name="aircraftSelection"
+          name="planeId"
           render={({ field }) => (
-            <FormItem className="space-y-2">
-              <FormLabel>{t('AddFlightLogForm.aircraft')}</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex space-x-4"
-                >
-                  <FormItem className="flex items-center space-x-2 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="existing" />
-                    </FormControl>
-                    <FormLabel className="font-normal">
-                      {t('AddFlightLogForm.existingAircraft')}
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-2 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="new" />
-                    </FormControl>
-                    <FormLabel className="font-normal">
-                      {t('AddFlightLogForm.newAircraft')}
-                    </FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
+            <FormItem>
+              <FormLabel>{t('AddFlightLogForm.selectAircraft')}</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={t(
+                        'AddFlightLogForm.selectAircraftPlaceholder'
+                      )}
+                    />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {planes.map((plane) => (
+                    <SelectItem key={plane.id} value={plane.id}>
+                      {plane.name} ({plane.id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        {aircraftSelection === 'existing' && (
-          <FormField
-            control={form.control}
-            name="planeId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('AddFlightLogForm.selectAircraft')}</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={t(
-                          'AddFlightLogForm.selectAircraftPlaceholder'
-                        )}
-                      />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {planes.map((plane) => (
-                      <SelectItem key={plane.id} value={plane.id}>
-                        {plane.name} ({plane.id})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {aircraftSelection === 'new' && (
-          <div className="space-y-4 rounded-md border p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="newPlaneId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('AddFlightLogForm.newAircraftId')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t(
-                          'AddFlightLogForm.newAircraftIdPlaceholder'
-                        )}
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="newPlaneName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('AddFlightLogForm.newAircraftName')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t(
-                          'AddFlightLogForm.newAircraftNamePlaceholder'
-                        )}
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="currentHourCounter"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {t('AddFlightLogForm.currentHourCounter')}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder={t(
-                        'AddFlightLogForm.currentHourCounterPlaceholder'
-                      )}
-                      {...field}
-                      value={field.value ?? ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="engineCheckHours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('AddFlightLogForm.engineCheckHours')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 50"
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="generalCheckHours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('AddFlightLogForm.generalCheckHours')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 100"
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        )}
 
         <div className="grid grid-cols-2 gap-4">
           <FormField
