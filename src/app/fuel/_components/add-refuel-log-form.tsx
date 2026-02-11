@@ -38,6 +38,7 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      date: '',
       litersRefueled: 100,
       cost: 200,
     },
