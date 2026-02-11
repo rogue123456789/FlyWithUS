@@ -403,7 +403,7 @@ export default function FlightsPage() {
     if (!sortedFlightLogs) return;
     downloadCsv(
       sortedFlightLogs,
-      `flight-logs-${new Date().toISOString().slice(0, 10)}.csv`
+      `movement-logs-${new Date().toISOString().slice(0, 10)}.csv`
     );
   };
 

@@ -160,7 +160,7 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
     },
     {
       href: '/flights',
-      label: t('Nav.flights'),
+      label: t('Nav.movements'),
       icon: Plane,
       role: ['admin', 'open'],
     },
