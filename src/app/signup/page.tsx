@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,7 +23,6 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -32,16 +30,11 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Assign 'open' role by default
-      const roleRef = doc(firestore, 'roles_open', user.uid);
-      await setDoc(roleRef, { email: user.email, username: user.email });
+      await createUserWithEmailAndPassword(auth, email, password);
 
       toast({
         title: 'Signup successful',
-        description: 'You are now registered as an Open User.',
+        description: 'Your account has been created.',
       });
       router.push('/');
     } catch (error: any) {
