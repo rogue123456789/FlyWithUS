@@ -25,6 +25,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useI18n();
@@ -33,8 +34,19 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Assign 'open' role to the new user
+      await setDoc(doc(firestore, 'roles_open', user.uid), {
+        email: user.email,
+        username: user.email,
+      });
+
       toast({
         title: t('SignupPage.toastSuccessTitle'),
         description: t('SignupPage.toastSuccessDescription'),

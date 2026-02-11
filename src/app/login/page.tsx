@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  signInAnonymously,
+} from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +36,22 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      router.push('/');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('LoginPage.toastFailedTitle'),
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGuestSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await signInAnonymously(auth);
       router.push('/');
     } catch (error: any) {
       toast({
@@ -76,20 +95,42 @@ export default function LoginPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter>
             <Button className="w-full" type="submit" disabled={isLoading}>
               {isLoading
                 ? t('LoginPage.signingInButton')
                 : t('LoginPage.signInButton')}
             </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              {t('LoginPage.noAccount')}{' '}
-              <Link href="/signup" className="underline">
-                {t('LoginPage.signUpLink')}
-              </Link>
-            </p>
           </CardFooter>
         </form>
+
+        <div className="relative px-6 pb-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              {t('LoginPage.orContinueWith')}
+            </span>
+          </div>
+        </div>
+
+        <CardFooter className="flex flex-col gap-4">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleGuestSignIn}
+            disabled={isLoading}
+          >
+            {t('LoginPage.continueAsGuest')}
+          </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            {t('LoginPage.noAccount')}{' '}
+            <Link href="/signup" className="underline">
+              {t('LoginPage.signUpLink')}
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );

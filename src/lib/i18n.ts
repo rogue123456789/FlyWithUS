@@ -135,6 +135,8 @@ export const translations = {
       noAccount: "Don't have an account?",
       signUpLink: 'Sign up',
       toastFailedTitle: 'Sign-in failed',
+      orContinueWith: 'Or continue with',
+      continueAsGuest: 'Continue as Guest',
     },
     SignupPage: {
       title: 'Sign Up',
@@ -548,6 +550,8 @@ export const translations = {
       noAccount: '¿No tienes una cuenta?',
       signUpLink: 'Regístrate',
       toastFailedTitle: 'Falló el inicio de sesión',
+      orContinueWith: 'O continuar con',
+      continueAsGuest: 'Continuar como Invitado',
     },
     SignupPage: {
       title: 'Registrarse',
