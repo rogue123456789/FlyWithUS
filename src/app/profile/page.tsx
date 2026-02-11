@@ -10,7 +10,8 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { Badge } from '@/components/ui/badge';
 import { UpdatePasswordForm } from './_components/update-password-form';
 import { useToast } from '@/hooks/use-toast';
