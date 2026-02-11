@@ -6,7 +6,7 @@ import {
   signInWithEmailAndPassword,
   signInAnonymously,
 } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,12 +21,14 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useI18n } from '@/context/i18n-context';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useI18n();
@@ -51,7 +53,15 @@ export default function LoginPage() {
   const handleGuestSignIn = async () => {
     setIsLoading(true);
     try {
-      await signInAnonymously(auth);
+      const userCredential = await signInAnonymously(auth);
+      const user = userCredential.user;
+
+      // Assign 'open' role to the guest user
+      await setDoc(doc(firestore, 'roles_open', user.uid), {
+        email: user.email,
+        username: 'Guest',
+      });
+
       router.push('/');
     } catch (error: any) {
       toast({
