@@ -306,13 +306,15 @@ export default function FlightsPage() {
         title: t('FlightsPage.toastUpdatedTitle'),
         description: t('FlightsPage.toastUpdatedDescription'),
       });
-      setLogToEdit(null);
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
         description: error.message,
       });
+    } finally {
+      setLogToEdit(null);
+      window.location.reload();
     }
   };
 
@@ -341,6 +343,7 @@ export default function FlightsPage() {
       });
     } finally {
       setLogToDelete(null);
+      window.location.reload();
     }
   };
 
@@ -385,6 +388,7 @@ export default function FlightsPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
+      window.location.reload();
     }
   };
 

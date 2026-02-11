@@ -284,6 +284,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const isAuthPage = pathname === '/login' || pathname === '/signup';
     const isDashboard = pathname === '/';
+    const isAdminPage = pathname === '/admin';
 
     // If not logged in, and not on an auth page, redirect to login.
     if (!user && !isAuthPage) {
@@ -300,6 +301,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           // Default redirect for 'open' users or if role is somehow not admin
           router.replace('/flights');
         }
+        return;
+      }
+
+      // If a non-admin user tries to access the admin page, redirect them.
+      if (userRole === 'open' && isAdminPage) {
+        router.replace('/flights');
         return;
       }
 

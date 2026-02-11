@@ -108,6 +108,7 @@ export function EmployeeManagement({ employees }: EmployeeManagementProps) {
         });
       } finally {
         setEmployeeToDelete(null);
+        window.location.reload();
       }
     }
   };
@@ -123,6 +124,7 @@ export function EmployeeManagement({ employees }: EmployeeManagementProps) {
       toast({
         title: t('EmployeeManagement.toastRoleUpdatedTitle'),
       });
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',

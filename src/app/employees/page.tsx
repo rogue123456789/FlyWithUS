@@ -290,13 +290,15 @@ export default function EmployeesPage() {
     try {
       await updateDoc(logRef, updatedLogData);
       toast({ title: t('EmployeesPage.toastUpdatedTitle') });
-      setLogToEdit(null);
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
         description: error.message,
       });
+    } finally {
+      setLogToEdit(null);
+      window.location.reload();
     }
   };
 
@@ -316,6 +318,7 @@ export default function EmployeesPage() {
       });
     } finally {
       setWorkLogToDelete(null);
+      window.location.reload();
     }
   };
 
@@ -345,6 +348,7 @@ export default function EmployeesPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
+      window.location.reload();
     }
   };
 

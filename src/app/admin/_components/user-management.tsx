@@ -87,6 +87,7 @@ export function UserManagement({ users }: UserManagementProps) {
           newRole: newRole,
         }),
       });
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -118,6 +119,7 @@ export function UserManagement({ users }: UserManagementProps) {
       });
     } finally {
       setUserToDelete(null);
+      window.location.reload();
     }
   };
 

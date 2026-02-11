@@ -404,6 +404,7 @@ export default function FuelPage() {
       // Error is already toasted in recalculateAndCommit
     } finally {
       setLogToEdit(null);
+      window.location.reload();
     }
   };
 
@@ -419,6 +420,7 @@ export default function FuelPage() {
       // Error is already toasted in recalculateAndCommit
     } finally {
       setLogToDelete(null);
+      window.location.reload();
     }
   };
 
@@ -455,6 +457,7 @@ export default function FuelPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
+      window.location.reload();
     }
   };
 
