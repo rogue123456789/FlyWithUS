@@ -318,7 +318,7 @@ export default function EmployeesPage() {
                   {t('EmployeesPage.clockedInAt')}{' '}
                   {selectedEmployee.lastClockIn &&
                     new Date(selectedEmployee.lastClockIn).toLocaleTimeString(
-                      [],
+                      'en-US',
                       {
                         timeZone: 'America/Costa_Rica',
                         hour: '2-digit',
@@ -395,7 +395,7 @@ export default function EmployeesPage() {
                     {log.employeeName}
                   </TableCell>
                   <TableCell>
-                    {new Date(log.date).toLocaleDateString([], {
+                    {new Date(log.date).toLocaleDateString('en-US', {
                       timeZone: 'America/Costa_Rica',
                       year: 'numeric',
                       month: 'short',
@@ -403,14 +403,14 @@ export default function EmployeesPage() {
                     })}
                   </TableCell>
                   <TableCell>
-                    {new Date(log.clockInTime).toLocaleTimeString([], {
+                    {new Date(log.clockInTime).toLocaleTimeString('en-US', {
                       timeZone: 'America/Costa_Rica',
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
                   </TableCell>
                   <TableCell>
-                    {new Date(log.clockOutTime).toLocaleTimeString([], {
+                    {new Date(log.clockOutTime).toLocaleTimeString('en-US', {
                       timeZone: 'America/Costa_Rica',
                       hour: '2-digit',
                       minute: '2-digit',
