@@ -24,6 +24,8 @@ export const translations = {
     Nav: {
       dashboard: 'Dashboard',
       flights: 'Flights',
+      logbook: 'Log Book',
+      payments: 'Payments',
       fuel: 'Fuel',
       employees: 'Employees',
     },
@@ -459,6 +461,8 @@ export const translations = {
     Nav: {
       dashboard: 'Panel',
       flights: 'Vuelos',
+      logbook: 'Bitácora',
+      payments: 'Pagos',
       fuel: 'Combustible',
       employees: 'Empleados',
     },

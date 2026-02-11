@@ -26,6 +26,8 @@ import {
   LoaderCircle,
   Settings,
   User as UserIcon,
+  Book,
+  CreditCard,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import {
@@ -160,6 +162,18 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
       href: '/flights',
       label: t('Nav.flights'),
       icon: Plane,
+      role: ['admin', 'open'],
+    },
+    {
+      href: '/logbook',
+      label: t('Nav.logbook'),
+      icon: Book,
+      role: ['admin', 'open'],
+    },
+    {
+      href: '/payments',
+      label: t('Nav.payments'),
+      icon: CreditCard,
       role: ['admin', 'open'],
     },
     {
