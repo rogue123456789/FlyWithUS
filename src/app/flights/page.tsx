@@ -86,7 +86,7 @@ const AddFlightLogDialog = ({
           {t('FlightsPage.recordFlightHours')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('FlightsPage.addDialogTitle')}</DialogTitle>
           <DialogDescription>
@@ -118,7 +118,7 @@ const EditFlightLogDialog = ({
 
   return (
     <Dialog open={!!log} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('FlightsPage.editDialogTitle')}</DialogTitle>
           <DialogDescription>
