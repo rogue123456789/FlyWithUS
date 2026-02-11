@@ -59,7 +59,7 @@ const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
           <UserIcon className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex flex-col overflow-hidden">
-          <span className="truncate font-medium">{user?.email}</span>
+          <span className="truncate font-medium">{user?.email ?? 'Guest'}</span>
           <span className="truncate text-xs text-sidebar-foreground/80">
             {t('AppShell.authenticated')}
           </span>
@@ -221,8 +221,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
   React.useEffect(() => {
+    // Wait for auth and the initial role doc fetches to complete
     const loading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
-
     if (loading) {
       setIsRoleLoading(true);
       return;
@@ -230,15 +230,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     if (adminRoleDoc) {
       setUserRole('admin');
+      setIsRoleLoading(false);
     } else if (openRoleDoc) {
       setUserRole('open');
+      setIsRoleLoading(false);
     } else if (user) {
-      // If a user is logged in but has no role doc, default them to 'open'
-      setUserRole('open');
-    } else {
+      // User is logged in, but no role document found yet.
+      // This happens temporarily after login/signup while the role doc is being created.
+      // We keep the app in a loading state until the useDoc hook gets the update.
       setUserRole(null);
+      setIsRoleLoading(true);
+    } else {
+      // No user, not loading.
+      setUserRole(null);
+      setIsRoleLoading(false);
     }
-    setIsRoleLoading(false);
   }, [isUserLoading, isAdminLoading, isOpenLoading, adminRoleDoc, openRoleDoc, user]);
 
 
