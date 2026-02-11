@@ -23,8 +23,9 @@ import {
   useCollection,
   useMemoFirebase,
   useUser,
+  useDoc,
 } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import type { FlightLog, FuelLog, Employee, Plane } from '@/lib/types';
 import { useAuthReady } from '@/context/auth-ready-context';
 
@@ -33,6 +34,32 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const isAuthReady = useAuthReady();
+  const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
+    null
+  );
+
+  const adminRef = useMemoFirebase(
+    () =>
+      isAuthReady && user ? doc(firestore, 'roles_admin', user.uid) : null,
+    [isAuthReady, firestore, user]
+  );
+  const { data: adminRoleDoc } = useDoc(adminRef);
+
+  const openRef = useMemoFirebase(
+    () => (isAuthReady && user ? doc(firestore, 'roles_open', user.uid) : null),
+    [isAuthReady, firestore, user]
+  );
+  const { data: openRoleDoc } = useDoc(openRef);
+
+  React.useEffect(() => {
+    if (adminRoleDoc) {
+      setUserRole('admin');
+    } else if (openRoleDoc) {
+      setUserRole('open');
+    } else {
+      setUserRole(null);
+    }
+  }, [adminRoleDoc, openRoleDoc]);
 
   const flightLogsCollection = useMemoFirebase(
     () =>
@@ -56,10 +83,10 @@ export default function DashboardPage() {
 
   const employeesCollection = useMemoFirebase(
     () =>
-      isAuthReady && user && firestore
+      isAuthReady && user && firestore && userRole === 'admin'
         ? collection(firestore, 'employees')
         : null,
-    [isAuthReady, firestore, user]
+    [isAuthReady, firestore, user, userRole]
   );
   const { data: employees, isLoading: employeesLoading } =
     useCollection<Employee>(employeesCollection);
@@ -94,9 +121,10 @@ export default function DashboardPage() {
 
   const isLoading =
     !isAuthReady ||
+    !userRole ||
     flightLogsLoading ||
     fuelLogsLoading ||
-    employeesLoading ||
+    (userRole === 'admin' && employeesLoading) ||
     planesLoading;
 
   if (isLoading) {
@@ -127,11 +155,13 @@ export default function DashboardPage() {
           value={totalFuelPumped.toFixed(0)}
           icon={Fuel}
         />
-        <StatsCard
-          title={t('Dashboard.activeEmployees')}
-          value={activeEmployees}
-          icon={Users}
-        />
+        {userRole === 'admin' && (
+          <StatsCard
+            title={t('Dashboard.activeEmployees')}
+            value={activeEmployees}
+            icon={Users}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
