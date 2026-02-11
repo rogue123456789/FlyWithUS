@@ -152,6 +152,7 @@ export function AddPaymentForm({ onSubmit }: AddPaymentFormProps) {
                   <Input
                     placeholder={t('AddPaymentForm.agencyName')}
                     {...field}
+                    value={field.value ?? ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -221,7 +222,12 @@ export function AddPaymentForm({ onSubmit }: AddPaymentFormProps) {
               <FormItem>
                 <FormLabel>{t('AddPaymentForm.amount')}</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" {...field} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
