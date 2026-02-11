@@ -31,7 +31,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
 import type { Employee } from '@/lib/types';
@@ -58,6 +57,9 @@ export function EmployeeManagement({
   const { t } = useI18n();
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = React.useState<Employee | null>(
+    null
+  );
 
   const handleAddEmployee = (values: {
     name: string;
@@ -84,6 +86,13 @@ export function EmployeeManagement({
     toast({
       title: t('EmployeeManagement.toastDeletedTitle'),
     });
+  };
+
+  const confirmDeleteEmployee = () => {
+    if (employeeToDelete) {
+      handleDeleteEmployee(employeeToDelete.id);
+      setEmployeeToDelete(null);
+    }
   };
 
   const handleRoleChange = (
@@ -160,50 +169,52 @@ export function EmployeeManagement({
                 </Select>
               </TableCell>
               <TableCell className="text-right">
-                <AlertDialog>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          {t('EmployeeManagement.delete')}
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {t('EmployeeManagement.deleteDialogTitle')}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t('EmployeeManagement.deleteDialogDescription', {
-                          name: employee.name,
-                        })}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>
-                        {t('EmployeeManagement.cancel')}
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDeleteEmployee(employee.id)}
-                      >
-                        {t('EmployeeManagement.confirm')}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onSelect={() => setEmployeeToDelete(employee)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {t('EmployeeManagement.delete')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      <AlertDialog
+        open={!!employeeToDelete}
+        onOpenChange={(open) => !open && setEmployeeToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('EmployeeManagement.deleteDialogTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('EmployeeManagement.deleteDialogDescription', {
+                name: employeeToDelete?.name,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('EmployeeManagement.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteEmployee}>
+              {t('EmployeeManagement.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

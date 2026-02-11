@@ -24,7 +24,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 import type { Plane } from '@/lib/types';
@@ -42,6 +41,7 @@ export function AircraftManagement({
 }: AircraftManagementProps) {
   const { t } = useI18n();
   const { toast } = useToast();
+  const [planeToDelete, setPlaneToDelete] = React.useState<Plane | null>(null);
 
   const handleDelete = (planeId: string) => {
     setPlanes((prev) => prev.filter((p) => p.id !== planeId));
@@ -53,28 +53,35 @@ export function AircraftManagement({
     });
   };
 
+  const confirmDelete = () => {
+    if (planeToDelete) {
+      handleDelete(planeToDelete.id);
+      setPlaneToDelete(null);
+    }
+  };
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{t('AircraftManagement.id')}</TableHead>
-          <TableHead>{t('AircraftManagement.name')}</TableHead>
-          <TableHead>{t('AircraftManagement.totalHours')}</TableHead>
-          <TableHead>{t('AircraftManagement.nextMaintenance')}</TableHead>
-          <TableHead className="text-right">
-            {t('AircraftManagement.actions')}
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {planes.map((plane) => (
-          <TableRow key={plane.id}>
-            <TableCell>{plane.id}</TableCell>
-            <TableCell>{plane.name}</TableCell>
-            <TableCell>{plane.totalHours.toFixed(1)}</TableCell>
-            <TableCell>{plane.nextMaintenanceHours.toFixed(1)}</TableCell>
-            <TableCell className="text-right">
-              <AlertDialog>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('AircraftManagement.id')}</TableHead>
+            <TableHead>{t('AircraftManagement.name')}</TableHead>
+            <TableHead>{t('AircraftManagement.totalHours')}</TableHead>
+            <TableHead>{t('AircraftManagement.nextMaintenance')}</TableHead>
+            <TableHead className="text-right">
+              {t('AircraftManagement.actions')}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {planes.map((plane) => (
+            <TableRow key={plane.id}>
+              <TableCell>{plane.id}</TableCell>
+              <TableCell>{plane.name}</TableCell>
+              <TableCell>{plane.totalHours.toFixed(1)}</TableCell>
+              <TableCell>{plane.nextMaintenanceHours.toFixed(1)}</TableCell>
+              <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -82,39 +89,45 @@ export function AircraftManagement({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        {t('AircraftManagement.delete')}
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
+                    <DropdownMenuItem
+                      onSelect={() => setPlaneToDelete(plane)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {t('AircraftManagement.delete')}
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {t('AircraftManagement.deleteDialogTitle')}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t('AircraftManagement.deleteDialogDescription', {
-                        planeId: plane.id,
-                      })}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>
-                      {t('AircraftManagement.cancel')}
-                    </AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDelete(plane.id)}>
-                      {t('AircraftManagement.confirm')}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <AlertDialog
+        open={!!planeToDelete}
+        onOpenChange={(open) => !open && setPlaneToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('AircraftManagement.deleteDialogTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('AircraftManagement.deleteDialogDescription', {
+                planeId: planeToDelete?.id,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('AircraftManagement.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              {t('AircraftManagement.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
