@@ -52,7 +52,7 @@ export function AircraftManagement({
           planeId: planeToDelete.id,
         }),
       });
-      setPlaneToDelete(null);
+      window.location.reload();
     }
   };
 

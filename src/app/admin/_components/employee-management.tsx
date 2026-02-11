@@ -87,7 +87,7 @@ export function EmployeeManagement({
       toast({
         title: t('EmployeeManagement.toastDeletedTitle'),
       });
-      setEmployeeToDelete(null);
+      window.location.reload();
     }
   };
 
