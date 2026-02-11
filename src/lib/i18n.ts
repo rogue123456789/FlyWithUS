@@ -29,6 +29,9 @@ export const translations = {
       fuel: 'Fuel',
       employees: 'Employees',
     },
+    LogbookPage: {
+      recordLogbook: 'Record Log Book',
+    },
     Dashboard: {
       title: 'Dashboard',
       totalMovements: 'Total Movements',
@@ -467,6 +470,9 @@ export const translations = {
       payments: 'Pagos',
       fuel: 'Combustible',
       employees: 'Empleados',
+    },
+    LogbookPage: {
+      recordLogbook: 'Registrar en Bitácora',
     },
     Dashboard: {
       title: 'Panel',
