@@ -97,6 +97,10 @@ export const translations = {
       newAircraftIdPlaceholder: 'e.g. N99999',
       newAircraftName: 'New Aircraft Name',
       newAircraftNamePlaceholder: 'e.g. Cessna 152',
+      currentHourCounter: 'Current Hour Counter',
+      currentHourCounterPlaceholder: 'e.g. 1250.5',
+      engineCheck: 'Engine Check Date',
+      generalCheck: 'General Check Date',
       aircraftSelectionError:
         'Please select an aircraft or provide details for a new one.',
       tookOffFrom: 'Took Off From',
@@ -489,6 +493,10 @@ export const translations = {
       newAircraftIdPlaceholder: 'ej. N99999',
       newAircraftName: 'Nombre de Aeronave Nueva',
       newAircraftNamePlaceholder: 'ej. Cessna 152',
+      currentHourCounter: 'Contador de Horas Actual',
+      currentHourCounterPlaceholder: 'ej. 1250.5',
+      engineCheck: 'Fecha de Revisión del Motor',
+      generalCheck: 'Fecha de Revisión General',
       aircraftSelectionError:
         'Por favor, selecciona una aeronave o proporciona detalles para una nueva.',
       tookOffFrom: 'Despegó De',

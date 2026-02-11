@@ -29,11 +29,16 @@ const getFormSchema = (t: (key: string) => string) =>
   z
     .object({
       date: z.string().min(1, t('AddFlightLogForm.dateRequired')),
-      pilotName: z.string().min(2, { message: t('AddFlightLogForm.pilotNameRequired') }),
+      pilotName: z
+        .string()
+        .min(2, { message: t('AddFlightLogForm.pilotNameRequired') }),
       aircraftSelection: z.enum(['existing', 'new']).default('existing'),
       planeId: z.string().optional(),
       newPlaneId: z.string().optional(),
       newPlaneName: z.string().optional(),
+      currentHourCounter: z.coerce.number().optional(),
+      engineCheck: z.coerce.date().optional(),
+      generalCheck: z.coerce.date().optional(),
       takeoffLocation: z
         .string()
         .min(2, { message: t('AddFlightLogForm.takeoffLocationRequired') }),
@@ -211,17 +216,64 @@ export function EditFlightLogForm({
         )}
 
         {aircraftSelection === 'new' && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4 rounded-md border p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="newPlaneId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t('AddFlightLogForm.newAircraftId')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t(
+                          'AddFlightLogForm.newAircraftIdPlaceholder'
+                        )}
+                        {...field}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="newPlaneName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t('AddFlightLogForm.newAircraftName')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t(
+                          'AddFlightLogForm.newAircraftNamePlaceholder'
+                        )}
+                        {...field}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
-              name="newPlaneId"
+              name="currentHourCounter"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('AddFlightLogForm.newAircraftId')}</FormLabel>
+                  <FormLabel>
+                    {t('AddFlightLogForm.currentHourCounter')}
+                  </FormLabel>
                   <FormControl>
                     <Input
+                      type="number"
                       placeholder={t(
-                        'AddFlightLogForm.newAircraftIdPlaceholder'
+                        'AddFlightLogForm.currentHourCounterPlaceholder'
                       )}
                       {...field}
                       value={field.value ?? ''}
@@ -231,25 +283,50 @@ export function EditFlightLogForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="newPlaneName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('AddFlightLogForm.newAircraftName')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t(
-                        'AddFlightLogForm.newAircraftNamePlaceholder'
-                      )}
-                      {...field}
-                      value={field.value ?? ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="engineCheck"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('AddFlightLogForm.engineCheck')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        {...field}
+                        value={
+                          field.value instanceof Date
+                            ? field.value.toISOString().slice(0, 10)
+                            : field.value ?? ''
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="generalCheck"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('AddFlightLogForm.generalCheck')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        {...field}
+                        value={
+                          field.value instanceof Date
+                            ? field.value.toISOString().slice(0, 10)
+                            : field.value ?? ''
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         )}
 

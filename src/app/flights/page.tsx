@@ -152,15 +152,25 @@ export default function FlightsPage() {
     let planeId;
     if (newLogData.aircraftSelection === 'new') {
       planeId = newLogData.newPlaneId;
+      const currentHours = newLogData.currentHourCounter || 0;
       const newPlane: Plane = {
         id: planeId,
         name: newLogData.newPlaneName,
-        totalHours: newLogData.flightDuration,
-        nextMaintenanceHours: 100, // Default maintenance hours
+        totalHours: currentHours + newLogData.flightDuration,
+        nextMaintenanceHours: currentHours + 100, // Default maintenance interval
+        engineCheckDate: newLogData.engineCheck?.toISOString().slice(0, 10),
+        generalCheckDate: newLogData.generalCheck?.toISOString().slice(0, 10),
       };
       setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
     } else {
       planeId = newLogData.planeId;
+      setPlanes((prevPlanes) =>
+        prevPlanes.map((p) =>
+          p.id === planeId
+            ? { ...p, totalHours: p.totalHours + newLogData.flightDuration }
+            : p
+        )
+      );
     }
 
     const newLog: FlightLog = {
@@ -186,11 +196,16 @@ export default function FlightsPage() {
     let planeId;
     if (updatedLogData.aircraftSelection === 'new') {
       planeId = updatedLogData.newPlaneId;
+      const currentHours = updatedLogData.currentHourCounter || 0;
       const newPlane: Plane = {
         id: planeId,
         name: updatedLogData.newPlaneName,
-        totalHours: updatedLogData.flightDuration,
-        nextMaintenanceHours: 100,
+        totalHours: currentHours + updatedLogData.flightDuration,
+        nextMaintenanceHours: currentHours + 100,
+        engineCheckDate: updatedLogData.engineCheck?.toISOString().slice(0, 10),
+        generalCheckDate: updatedLogData.generalCheck
+          ?.toISOString()
+          .slice(0, 10),
       };
       setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
     } else {
