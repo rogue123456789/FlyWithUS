@@ -42,9 +42,6 @@ const getFormSchema = (t: (key: string) => string) =>
       planeId: z.string().optional(),
       newPlaneId: z.string().optional(),
       newPlaneName: z.string().optional(),
-      currentHourCounter: z.coerce.number().optional(),
-      engineCheckHours: z.coerce.number().optional(),
-      generalCheckHours: z.coerce.number().optional(),
       takeoffLocation: z
         .string()
         .min(2, { message: t('AddFlightLogForm.takeoffLocationRequired') }),
@@ -54,6 +51,7 @@ const getFormSchema = (t: (key: string) => string) =>
       flightDuration: z.coerce
         .number()
         .min(0.1, { message: t('AddFlightLogForm.flightDurationError') }),
+      squawk: z.coerce.number().optional(),
       flightReason: z
         .string()
         .min(2, { message: t('AddFlightLogForm.flightReasonRequired') }),
@@ -98,6 +96,7 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
       landingLocation: '',
       flightReason: '',
       aircraftSelection: 'existing',
+      squawk: 7000,
     },
   });
 
@@ -256,70 +255,6 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="currentHourCounter"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {t('AddFlightLogForm.currentHourCounter')}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder={t(
-                        'AddFlightLogForm.currentHourCounterPlaceholder'
-                      )}
-                      {...field}
-                      value={field.value ?? ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="engineCheckHours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('AddFlightLogForm.engineCheckHours')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 50"
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="generalCheckHours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('AddFlightLogForm.generalCheckHours')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 100"
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
           </div>
         )}
 
@@ -360,19 +295,39 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="flightDuration"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('AddFlightLogForm.flightDuration')}</FormLabel>
-              <FormControl>
-                <Input type="number" step="0.1" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="flightDuration"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('AddFlightLogForm.flightDuration')}</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.1" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="squawk"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('AddFlightLogForm.squawk')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder={t('AddFlightLogForm.squawkPlaceholder')}
+                    {...field}
+                    value={field.value ?? ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}

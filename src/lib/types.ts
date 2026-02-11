@@ -24,6 +24,7 @@ export interface FlightLog {
   flightDuration: number; // in hours
   flightReason: string;
   date: string;
+  squawk?: number;
 }
 
 export interface FuelLog {

@@ -45,6 +45,7 @@ const getFormSchema = (t: (key: string) => string) =>
     flightDuration: z.coerce
       .number()
       .min(0.1, { message: t('AddFlightLogForm.flightDurationError') }),
+    squawk: z.coerce.number().optional(),
     flightReason: z
       .string()
       .min(2, { message: t('AddFlightLogForm.flightReasonRequired') }),
@@ -74,6 +75,7 @@ export function EditFlightLogForm({
       landingLocation: log.landingLocation,
       flightDuration: log.flightDuration,
       flightReason: log.flightReason,
+      squawk: log.squawk,
     },
   });
 
@@ -187,19 +189,39 @@ export function EditFlightLogForm({
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="flightDuration"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('AddFlightLogForm.flightDuration')}</FormLabel>
-              <FormControl>
-                <Input type="number" step="0.1" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="flightDuration"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('AddFlightLogForm.flightDuration')}</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.1" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="squawk"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('AddFlightLogForm.squawk')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder={t('AddFlightLogForm.squawkPlaceholder')}
+                    {...field}
+                    value={field.value ?? ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}

@@ -122,6 +122,7 @@ export const translations = {
       tableTo: 'To',
       tableDuration: 'Duration',
       tableReason: 'Reason',
+      tableSquawk: 'Squawk',
       tableActions: 'Actions',
       edit: 'Edit',
       delete: 'Delete',
@@ -181,6 +182,8 @@ export const translations = {
       flightReasonRequired: 'Reason for flying is required.',
       recordFlightHours: 'Record Movement',
       saveChanges: 'Save Changes',
+      squawk: 'Squawk Code',
+      squawkPlaceholder: 'e.g. 7000',
     },
     LoginPage: {
       title: 'Login',
@@ -615,6 +618,7 @@ export const translations = {
       tableTo: 'A',
       tableDuration: 'Duración',
       tableReason: 'Razón',
+      tableSquawk: 'Squawk',
       tableActions: 'Acciones',
       edit: 'Editar',
       delete: 'Eliminar',
@@ -677,6 +681,8 @@ export const translations = {
       flightReasonRequired: 'La razón del vuelo es obligatoria.',
       recordFlightHours: 'Registrar Movimiento',
       saveChanges: 'Guardar Cambios',
+      squawk: 'Código Squawk',
+      squawkPlaceholder: 'ej. 7000',
     },
     LoginPage: {
       title: 'Iniciar Sesión',

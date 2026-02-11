@@ -208,14 +208,10 @@ export default function FlightsPage() {
       let planeId;
       if (newLogData.aircraftSelection === 'new') {
         planeId = newLogData.newPlaneId;
-        const currentHours = newLogData.currentHourCounter || 0;
         const newPlane = {
           name: newLogData.newPlaneName,
-          totalHours: currentHours + newLogData.flightDuration,
-          nextMaintenanceHours:
-            currentHours + (newLogData.generalCheckHours || 100),
-          engineCheckHours: newLogData.engineCheckHours,
-          generalCheckHours: newLogData.generalCheckHours,
+          totalHours: newLogData.flightDuration,
+          nextMaintenanceHours: 100, // Default maintenance schedule
         };
         // Using setDoc because the ID (tail number) is known
         await setDoc(doc(firestore, 'aircrafts', planeId), newPlane);
@@ -235,6 +231,7 @@ export default function FlightsPage() {
         landingLocation: newLogData.landingLocation,
         flightDuration: newLogData.flightDuration,
         flightReason: newLogData.flightReason,
+        squawk: newLogData.squawk,
       };
       await addDoc(collection(firestore, 'flight_logs'), newLog);
 
@@ -456,6 +453,7 @@ export default function FlightsPage() {
                 <TableHead>{t('FlightsPage.tableTo')}</TableHead>
                 <TableHead>{t('FlightsPage.tableDuration')}</TableHead>
                 <TableHead>{t('FlightsPage.tableReason')}</TableHead>
+                <TableHead>{t('FlightsPage.tableSquawk')}</TableHead>
                 <TableHead className="text-right">
                   {t('FlightsPage.tableActions')}
                 </TableHead>
@@ -473,6 +471,7 @@ export default function FlightsPage() {
                   <TableCell>{log.landingLocation}</TableCell>
                   <TableCell>{log.flightDuration.toFixed(1)}h</TableCell>
                   <TableCell>{log.flightReason}</TableCell>
+                  <TableCell>{log.squawk}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

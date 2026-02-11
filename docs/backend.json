@@ -145,6 +145,10 @@
           "type": "string",
           "format": "date-time",
           "description": "The date of the flight."
+        },
+        "squawk": {
+          "type": "number",
+          "description": "The squawk code for the flight."
         }
       },
       "required": [
