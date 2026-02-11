@@ -24,6 +24,7 @@ import {
   PlusCircle,
   MoreHorizontal,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 import { AddFlightLogForm } from './_components/add-flight-log-form';
 import { EditFlightLogForm } from './_components/edit-flight-log-form';
@@ -35,6 +36,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +63,7 @@ import {
   updateDoc,
   setDoc,
   increment,
+  deleteDoc,
 } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 
@@ -145,8 +157,10 @@ export default function FlightsPage() {
   const { data: planes } = useCollection<Plane>(planesCollection);
 
   const [logToEdit, setLogToEdit] = React.useState<FlightLog | null>(null);
+  const [logToDelete, setLogToDelete] = React.useState<FlightLog | null>(null);
 
   const handleAddFlightLog = async (newLogData: any) => {
+    if (!firestore) return;
     try {
       let planeId;
       if (newLogData.aircraftSelection === 'new') {
@@ -188,11 +202,16 @@ export default function FlightsPage() {
         }),
       });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
     }
   };
 
   const handleUpdateFlightLog = async (updatedLogData: any) => {
+    if (!firestore) return;
     try {
       const logRef = doc(firestore, 'flight_logs', updatedLogData.id);
       await updateDoc(logRef, updatedLogData);
@@ -203,7 +222,39 @@ export default function FlightsPage() {
       });
       setLogToEdit(null);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
+    }
+  };
+
+  const handleDeleteFlightLog = async () => {
+    if (!logToDelete || !firestore) return;
+    try {
+      const planeRef = doc(firestore, 'aircrafts', logToDelete.planeId);
+      await updateDoc(planeRef, {
+        totalHours: increment(-logToDelete.flightDuration),
+      });
+
+      const logRef = doc(firestore, 'flight_logs', logToDelete.id);
+      await deleteDoc(logRef);
+
+      toast({
+        title: t('FlightsPage.toastDeletedTitle'),
+        description: t('FlightsPage.toastDeletedDescription', {
+          logId: logToDelete.id,
+        }),
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error deleting log',
+        description: error.message,
+      });
+    } finally {
+      setLogToDelete(null);
     }
   };
 
@@ -287,6 +338,13 @@ export default function FlightsPage() {
                           <Pencil className="mr-2 h-4 w-4" />
                           {t('FlightsPage.edit')}
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onSelect={() => setLogToDelete(log)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {t('FlightsPage.delete')}
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -303,6 +361,33 @@ export default function FlightsPage() {
           onUpdate={handleUpdateFlightLog}
           onOpenChange={(open) => !open && setLogToEdit(null)}
         />
+      )}
+      {logToDelete && (
+        <AlertDialog
+          open={!!logToDelete}
+          onOpenChange={(open) => !open && setLogToDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t('FlightsPage.deleteDialogTitle')}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('FlightsPage.deleteDialogDescription', {
+                  logId: logToDelete.id,
+                })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setLogToDelete(null)}>
+                {t('FlightsPage.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteFlightLog}>
+                {t('FlightsPage.delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

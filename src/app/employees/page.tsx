@@ -26,6 +26,7 @@ import {
   Download,
   MoreHorizontal,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import {
@@ -33,7 +34,7 @@ import {
   doc,
   updateDoc,
   addDoc,
-  serverTimestamp,
+  deleteDoc,
 } from 'firebase/firestore';
 import {
   Select,
@@ -54,6 +55,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   format,
@@ -115,12 +126,16 @@ export default function EmployeesPage() {
     string | null
   >(null);
   const [logToEdit, setLogToEdit] = React.useState<WorkLog | null>(null);
+  const [workLogToDelete, setWorkLogToDelete] = React.useState<WorkLog | null>(
+    null
+  );
   const { toast } = useToast();
   const { t } = useI18n();
 
   const selectedEmployee = employees?.find((e) => e.id === selectedEmployeeId);
 
   const handleClockIn = async (employeeId: string) => {
+    if (!firestore) return;
     const employeeRef = doc(firestore, 'employees', employeeId);
     try {
       await updateDoc(employeeRef, {
@@ -137,11 +152,16 @@ export default function EmployeesPage() {
         });
       }
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
     }
   };
 
   const handleClockOut = async (employeeId: string) => {
+    if (!firestore) return;
     const employee = employees?.find((e) => e.id === employeeId);
     if (!employee || !employee.lastClockIn) return;
 
@@ -175,7 +195,11 @@ export default function EmployeesPage() {
         }),
       });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
     }
   };
 
@@ -221,7 +245,7 @@ export default function EmployeesPage() {
     clockInTime: string;
     clockOutTime: string;
   }) => {
-    if (!logToEdit) return;
+    if (!logToEdit || !firestore) return;
 
     const clockInDateTime = new Date(`${values.date}T${values.clockInTime}`);
     const clockOutDateTime = new Date(`${values.date}T${values.clockOutTime}`);
@@ -240,7 +264,30 @@ export default function EmployeesPage() {
       toast({ title: t('EmployeesPage.toastUpdatedTitle') });
       setLogToEdit(null);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
+    }
+  };
+
+  const handleDeleteWorkLog = async () => {
+    if (!workLogToDelete || !firestore) return;
+    try {
+      const logRef = doc(firestore, 'work_logs', workLogToDelete.id);
+      await deleteDoc(logRef);
+      toast({
+        title: t('EmployeesPage.toastLogDeletedTitle'),
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error deleting log',
+        description: error.message,
+      });
+    } finally {
+      setWorkLogToDelete(null);
     }
   };
 
@@ -400,6 +447,13 @@ export default function EmployeesPage() {
                           <Pencil className="mr-2 h-4 w-4" />
                           {t('EmployeesPage.edit')}
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onSelect={() => setWorkLogToDelete(log)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {t('EmployeesPage.delete')}
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -422,6 +476,34 @@ export default function EmployeesPage() {
             <EditWorkLogForm log={logToEdit} onSubmit={handleUpdateWorkLog} />
           </DialogContent>
         </Dialog>
+      )}
+
+      {workLogToDelete && (
+        <AlertDialog
+          open={!!workLogToDelete}
+          onOpenChange={(open) => !open && setWorkLogToDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t('EmployeesPage.deleteLogDialogTitle')}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('EmployeesPage.deleteLogDialogDescription', {
+                  logId: workLogToDelete.id,
+                })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setWorkLogToDelete(null)}>
+                {t('EmployeesPage.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteWorkLog}>
+                {t('EmployeesPage.delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

@@ -52,13 +52,8 @@ export const translations = {
     },
     FlightsPage: {
       title: 'Flight Logs',
-      clearLogs: 'Clear Logs',
       export: 'Export',
       recordFlightHours: 'Record flight hours',
-      clearLogsDialogTitle: 'Are you absolutely sure?',
-      clearLogsDialogDescription:
-        'This action cannot be undone. This will permanently delete all flight logs.',
-      continue: 'Continue',
       cancel: 'Cancel',
       allFlightsCardTitle: 'All Flights',
       allFlightsCardDescription: 'A comprehensive list of all recorded flights.',
@@ -71,6 +66,12 @@ export const translations = {
       tableReason: 'Reason',
       tableActions: 'Actions',
       edit: 'Edit',
+      delete: 'Delete',
+      deleteDialogTitle: 'Are you sure?',
+      deleteDialogDescription:
+        'This will permanently delete flight log {logId}. This action cannot be undone.',
+      toastDeletedTitle: 'Flight Log Deleted',
+      toastDeletedDescription: 'Flight log {logId} has been deleted.',
       addDialogTitle: 'Record Flight Hours',
       addDialogDescription:
         'Fill in the details below to add a new flight to the log.',
@@ -80,8 +81,6 @@ export const translations = {
       toastAddedDescription: 'Successfully recorded flight for {pilotName}.',
       toastUpdatedTitle: 'Flight Log Updated',
       toastUpdatedDescription: 'The flight log has been successfully updated.',
-      toastClearedTitle: 'Flight Logs Cleared',
-      toastClearedDescription: 'All flight logs have been deleted.',
     },
     AddFlightLogForm: {
       date: 'Date',
@@ -216,11 +215,7 @@ export const translations = {
     },
     EmployeesPage: {
       title: 'Employees',
-      clearLogs: 'Clear Logs',
       export: 'Export',
-      clearLogsDialogTitle: 'Are you absolutely sure?',
-      clearLogsDialogDescription: 'This will permanently delete all work logs.',
-      continue: 'Continue',
       cancel: 'Cancel',
       timeClockCardTitle: 'Time Clock',
       selectEmployeePlaceholder: 'Select an employee',
@@ -240,14 +235,17 @@ export const translations = {
       tableActions: 'Actions',
       noWorkLogs: 'No work logs yet.',
       edit: 'Edit',
+      delete: 'Delete',
       dialogEditTitle: 'Edit Work Log',
+      deleteLogDialogTitle: 'Are you sure?',
+      deleteLogDialogDescription:
+        'This will permanently delete work log {logId}. This action cannot be undone.',
+      toastLogDeletedTitle: 'Work Log Deleted',
       toastClockInTitle: 'Clocked In',
       toastClockInDescription: '{name} has been clocked in.',
       toastClockOutTitle: 'Clocked Out',
       toastClockOutDescription:
         '{name} has been clocked out. Work duration: {duration}',
-      toastClearedTitle: 'Work Logs Cleared',
-      toastClearedDescription: 'All work logs have been deleted.',
       toastUpdatedTitle: 'Work Log Updated',
     },
     EditWorkLogForm: {
@@ -261,14 +259,9 @@ export const translations = {
     },
     FuelPage: {
       title: 'Fuel Logs',
-      clearLogs: 'Clear Logs',
       export: 'Export',
       refueling: 'Refueling',
       logFuel: 'Log Fuel',
-      clearLogsDialogTitle: 'Are you absolutely sure?',
-      clearLogsDialogDescription:
-        'This action cannot be undone. This will permanently delete all fuel logs.',
-      continue: 'Continue',
       cancel: 'Cancel',
       allTransactionsCardTitle: 'All Fuel Transactions',
       allTransactionsCardDescription:
@@ -290,8 +283,6 @@ export const translations = {
       editDialogDescription: 'Update the details for this fuel transaction.',
       toastUpdatedTitle: 'Fuel Log Updated',
       toastUpdatedDescription: 'The transaction has been updated.',
-      toastClearedTitle: 'Fuel Logs Cleared',
-      toastClearedDescription: 'All fuel logs have been deleted.',
     },
     AddFuelLogForm: {
       date: 'Date',
@@ -444,13 +435,8 @@ export const translations = {
     },
     FlightsPage: {
       title: 'Registros de Vuelo',
-      clearLogs: 'Limpiar Registros',
       export: 'Exportar',
       recordFlightHours: 'Registrar horas de vuelo',
-      clearLogsDialogTitle: '¿Estás absolutamente seguro?',
-      clearLogsDialogDescription:
-        'Esta acción no se puede deshacer. Esto eliminará permanentemente todos los registros de vuelo.',
-      continue: 'Continuar',
       cancel: 'Cancelar',
       allFlightsCardTitle: 'Todos los Vuelos',
       allFlightsCardDescription:
@@ -464,6 +450,13 @@ export const translations = {
       tableReason: 'Razón',
       tableActions: 'Acciones',
       edit: 'Editar',
+      delete: 'Eliminar',
+      deleteDialogTitle: '¿Estás seguro?',
+      deleteDialogDescription:
+        'Esto eliminará permanentemente el registro de vuelo {logId}. Esta acción no se puede deshacer.',
+      toastDeletedTitle: 'Registro de Vuelo Eliminado',
+      toastDeletedDescription:
+        'El registro de vuelo {logId} ha sido eliminado.',
       addDialogTitle: 'Registrar Horas de Vuelo',
       addDialogDescription:
         'Completa los detalles a continuación para agregar un nuevo vuelo al registro.',
@@ -476,8 +469,6 @@ export const translations = {
       toastUpdatedTitle: 'Registro de Vuelo Actualizado',
       toastUpdatedDescription:
         'El registro de vuelo se ha actualizado exitosamente.',
-      toastClearedTitle: 'Registros de Vuelo Eliminados',
-      toastClearedDescription: 'Todos los registros de vuelo han sido eliminados.',
     },
     AddFlightLogForm: {
       date: 'Fecha',
@@ -616,12 +607,7 @@ export const translations = {
     },
     EmployeesPage: {
       title: 'Empleados',
-      clearLogs: 'Limpiar Registros',
       export: 'Exportar',
-      clearLogsDialogTitle: '¿Estás absolutamente seguro?',
-      clearLogsDialogDescription:
-        'Esto eliminará permanentemente todos los registros de trabajo.',
-      continue: 'Continuar',
       cancel: 'Cancelar',
       timeClockCardTitle: 'Reloj de Fichaje',
       selectEmployeePlaceholder: 'Selecciona un empleado',
@@ -642,15 +628,17 @@ export const translations = {
       tableActions: 'Acciones',
       noWorkLogs: 'Aún no hay registros de trabajo.',
       edit: 'Editar',
+      delete: 'Eliminar',
       dialogEditTitle: 'Editar Registro de Trabajo',
+      deleteLogDialogTitle: '¿Estás seguro?',
+      deleteLogDialogDescription:
+        'Esto eliminará permanentemente el registro de trabajo {logId}. Esta acción no se puede deshacer.',
+      toastLogDeletedTitle: 'Registro de Trabajo Eliminado',
       toastClockInTitle: 'Fichado',
       toastClockInDescription: '{name} ha fichado su entrada.',
       toastClockOutTitle: 'Salida Fichada',
       toastClockOutDescription:
         '{name} ha fichado su salida. Duración del trabajo: {duration}',
-      toastClearedTitle: 'Registros de Trabajo Eliminados',
-      toastClearedDescription:
-        'Todos los registros de trabajo han sido eliminados.',
       toastUpdatedTitle: 'Registro de Trabajo Actualizado',
     },
     EditWorkLogForm: {
@@ -664,14 +652,9 @@ export const translations = {
     },
     FuelPage: {
       title: 'Registros de Combustible',
-      clearLogs: 'Limpiar Registros',
       export: 'Exportar',
       refueling: 'Repostaje',
       logFuel: 'Registrar Combustible',
-      clearLogsDialogTitle: '¿Estás absolutamente seguro?',
-      clearLogsDialogDescription:
-        'Esta acción no se puede deshacer. Esto eliminará permanentemente todos los registros de combustible.',
-      continue: 'Continuar',
       cancel: 'Cancelar',
       allTransactionsCardTitle: 'Todas las Transacciones de Combustible',
       allTransactionsCardDescription:
@@ -695,9 +678,6 @@ export const translations = {
         'Actualiza los detalles de esta transacción de combustible.',
       toastUpdatedTitle: 'Registro de Combustible Actualizado',
       toastUpdatedDescription: 'La transacción ha sido actualizada.',
-      toastClearedTitle: 'Registros de Combustible Eliminados',
-      toastClearedDescription:
-        'Todos los registros de combustible han sido eliminados.',
     },
     AddFuelLogForm: {
       date: 'Fecha',
