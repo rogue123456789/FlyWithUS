@@ -11,8 +11,8 @@ export interface Plane {
   name: string;
   totalHours: number;
   nextMaintenanceHours: number;
-  engineCheckDate?: string;
-  generalCheckDate?: string;
+  engineCheckHours?: number;
+  generalCheckHours?: number;
 }
 
 export interface FlightLog {

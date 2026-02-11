@@ -37,8 +37,8 @@ const getFormSchema = (t: (key: string) => string) =>
       newPlaneId: z.string().optional(),
       newPlaneName: z.string().optional(),
       currentHourCounter: z.coerce.number().optional(),
-      engineCheck: z.coerce.date().optional(),
-      generalCheck: z.coerce.date().optional(),
+      engineCheckHours: z.coerce.number().optional(),
+      generalCheckHours: z.coerce.number().optional(),
       takeoffLocation: z
         .string()
         .min(2, { message: t('AddFlightLogForm.takeoffLocationRequired') }),
@@ -286,19 +286,18 @@ export function EditFlightLogForm({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="engineCheck"
+                name="engineCheckHours"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('AddFlightLogForm.engineCheck')}</FormLabel>
+                    <FormLabel>
+                      {t('AddFlightLogForm.engineCheckHours')}
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        type="date"
+                        type="number"
+                        placeholder="e.g. 50"
                         {...field}
-                        value={
-                          field.value instanceof Date
-                            ? field.value.toISOString().slice(0, 10)
-                            : field.value ?? ''
-                        }
+                        value={field.value ?? ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -307,19 +306,18 @@ export function EditFlightLogForm({
               />
               <FormField
                 control={form.control}
-                name="generalCheck"
+                name="generalCheckHours"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('AddFlightLogForm.generalCheck')}</FormLabel>
+                    <FormLabel>
+                      {t('AddFlightLogForm.generalCheckHours')}
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        type="date"
+                        type="number"
+                        placeholder="e.g. 100"
                         {...field}
-                        value={
-                          field.value instanceof Date
-                            ? field.value.toISOString().slice(0, 10)
-                            : field.value ?? ''
-                        }
+                        value={field.value ?? ''}
                       />
                     </FormControl>
                     <FormMessage />

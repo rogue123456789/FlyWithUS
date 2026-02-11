@@ -158,8 +158,8 @@ export default function FlightsPage() {
         name: newLogData.newPlaneName,
         totalHours: currentHours + newLogData.flightDuration,
         nextMaintenanceHours: currentHours + 100, // Default maintenance interval
-        engineCheckDate: newLogData.engineCheck?.toISOString().slice(0, 10),
-        generalCheckDate: newLogData.generalCheck?.toISOString().slice(0, 10),
+        engineCheckHours: newLogData.engineCheckHours,
+        generalCheckHours: newLogData.generalCheckHours,
       };
       setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
     } else {
@@ -202,10 +202,8 @@ export default function FlightsPage() {
         name: updatedLogData.newPlaneName,
         totalHours: currentHours + updatedLogData.flightDuration,
         nextMaintenanceHours: currentHours + 100,
-        engineCheckDate: updatedLogData.engineCheck?.toISOString().slice(0, 10),
-        generalCheckDate: updatedLogData.generalCheck
-          ?.toISOString()
-          .slice(0, 10),
+        engineCheckHours: updatedLogData.engineCheckHours,
+        generalCheckHours: updatedLogData.generalCheckHours,
       };
       setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
     } else {
