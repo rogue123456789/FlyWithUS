@@ -36,14 +36,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import {
-  useUser,
-  useAuth,
-  useFirestore,
-  useDoc,
-  useMemoFirebase,
-} from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useAuth, useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { Button } from '../ui/button';
 import { useI18n } from '@/context/i18n-context';
 import { AuthReadyProvider } from '@/context/auth-ready-context';
@@ -238,54 +232,53 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
   const [isRoleLoading, setIsRoleLoading] = React.useState(true);
 
-  const adminRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
-    [firestore, user]
-  );
-  const { data: adminRoleDoc, isLoading: isAdminLoading } = useDoc(adminRef);
-
-  const openRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
-    [firestore, user]
-  );
-  const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
-
+  // This effect fetches the user's role ONCE when the user object becomes available.
   React.useEffect(() => {
     if (isUserLoading) {
       setIsRoleLoading(true);
       return;
     }
-
     if (!user) {
       setUserRole(null);
       setIsRoleLoading(false);
       return;
     }
 
-    if (isAdminLoading || isOpenLoading) {
+    const fetchUserRole = async () => {
       setIsRoleLoading(true);
-      return;
-    }
+      const adminRef = doc(firestore, 'roles_admin', user.uid);
+      const openRef = doc(firestore, 'roles_open', user.uid);
 
-    if (adminRoleDoc) {
-      setUserRole('admin');
-    } else if (openRoleDoc) {
-      setUserRole('open');
-    } else {
-      setUserRole(null);
-    }
-    setIsRoleLoading(false);
-  }, [
-    user,
-    isUserLoading,
-    adminRoleDoc,
-    openRoleDoc,
-    isAdminLoading,
-    isOpenLoading,
-  ]);
+      try {
+        const adminDoc = await getDoc(adminRef);
+        if (adminDoc.exists()) {
+          setUserRole('admin');
+          return;
+        }
 
+        const openDoc = await getDoc(openRef);
+        if (openDoc.exists()) {
+          setUserRole('open');
+          return;
+        }
+
+        setUserRole(null); // No role found
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+        setUserRole(null);
+      } finally {
+        setIsRoleLoading(false);
+      }
+    };
+
+    fetchUserRole();
+  }, [user, isUserLoading, firestore]);
+
+  // This effect handles page protection and redirection based on auth state.
   React.useEffect(() => {
-    if (isUserLoading || isRoleLoading) return;
+    if (isUserLoading || isRoleLoading) {
+      return; // Wait until all authentication checks are complete
+    }
 
     const isAuthPage = pathname === '/login' || pathname === '/signup';
 
@@ -294,16 +287,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } else if (user && isAuthPage) {
       router.replace('/');
     } else if (user && !userRole && !isAuthPage) {
+      // This is a critical safety net. If a user is authenticated but has no role,
+      // something is wrong. Sign them out to force a clean login.
       auth.signOut();
       router.replace('/login');
     }
-  }, [user, isUserLoading, isRoleLoading, userRole, pathname, router, auth]);
+  }, [user, isUserLoading, userRole, isRoleLoading, pathname, router, auth]);
 
-  const isLoading = isUserLoading || isRoleLoading;
-  const isAuthReady = !isLoading;
+  const isAppLoading = isUserLoading || isRoleLoading;
+  const isAuthReady = !isAppLoading && !!user && !!userRole;
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
-  if (isLoading && !isAuthPage) {
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
+
+  // Show a loader while authentication is in progress.
+  if (isAppLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -311,11 +311,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
-
-  if (!user) {
+  // If loading is finished but there's no valid user/role, show loader
+  // while the redirection effect kicks in. This prevents flashing the UI.
+  if (!isAuthReady) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
