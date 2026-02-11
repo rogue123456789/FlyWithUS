@@ -46,3 +46,25 @@ export interface WorkLog {
   clockOutTime: string;
   duration: number; // in milliseconds
 }
+
+export interface Logbook {
+  id: string;
+  name: string;
+  totalHours: number;
+  engineCheckHours?: number;
+  generalCheckHours?: number;
+}
+
+export interface LogbookEntry {
+  id: string;
+  logbookId: string;
+  date: string;
+  startLocation: string;
+  endLocation: string;
+  duration: number; // in hours
+  reason: string;
+  batteryStatus: 'OK' | 'Not OK';
+  oilPressure: number;
+  oilTemp: number;
+  waterTemp: number;
+}

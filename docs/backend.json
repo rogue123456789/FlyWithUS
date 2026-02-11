@@ -249,6 +249,78 @@
         "username",
         "email"
       ]
+    },
+    "Logbook": {
+      "title": "Logbook",
+      "type": "object",
+      "description": "Represents a machine or vehicle with a logbook.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "totalHours": {
+          "type": "number"
+        },
+        "engineCheckHours": {
+          "type": "number"
+        },
+        "generalCheckHours": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "totalHours"
+      ]
+    },
+    "LogbookEntry": {
+      "title": "LogbookEntry",
+      "type": "object",
+      "description": "Represents a single logbook entry.",
+      "properties": {
+        "logbookId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "startLocation": {
+          "type": "string"
+        },
+        "endLocation": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "batteryStatus": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "Not OK"
+          ]
+        },
+        "oilPressure": {
+          "type": "number"
+        },
+        "oilTemp": {
+          "type": "number"
+        },
+        "waterTemp": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "logbookId",
+        "date",
+        "duration",
+        "reason",
+        "batteryStatus"
+      ]
     }
   },
   "auth": {
@@ -327,6 +399,26 @@
             "$ref": "#/backend/entities/OpenUser"
           },
           "description": "Indicates that a user is an open user. Existence of a document grants open user privileges."
+        }
+      },
+      {
+        "path": "/logbooks/{logbookId}",
+        "definition": {
+          "entityName": "Logbook",
+          "schema": {
+            "$ref": "#/backend/entities/Logbook"
+          },
+          "description": "Stores information about each machine/vehicle logbook."
+        }
+      },
+      {
+        "path": "/logbook_entries/{logbookEntryId}",
+        "definition": {
+          "entityName": "LogbookEntry",
+          "schema": {
+            "$ref": "#/backend/entities/LogbookEntry"
+          },
+          "description": "Stores individual logbook entries."
         }
       }
     ]

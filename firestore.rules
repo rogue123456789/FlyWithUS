@@ -110,6 +110,23 @@ service cloud.firestore {
       allow get, list: if isAdmin() || isOpenUser();
       allow write: if isAdmin() || isOpenUser(); // create, update, delete
     }
+    
+    /**
+     * @description Manages machine/vehicle logbooks.
+     */
+    match /logbooks/{logbookId} {
+      allow get, list: if isAdmin() || isOpenUser();
+      allow create, update: if isAdmin() || isOpenUser();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Stores logbook entries.
+     */
+    match /logbook_entries/{logbookEntryId} {
+      allow get, list: if isAdmin() || isOpenUser();
+      allow write: if isAdmin() || isOpenUser(); // create, update, delete
+    }
 
     /**
      * @description Manages which users have Admin privileges. Only other Admins can modify this collection. Users can read their own admin status.
