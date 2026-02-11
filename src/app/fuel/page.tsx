@@ -19,8 +19,11 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { fuelLogs as initialFuelLogs, planes } from '@/lib/data';
-import type { FuelLog } from '@/lib/types';
+import {
+  fuelLogs as initialFuelLogs,
+  planes as initialPlanes,
+} from '@/lib/data';
+import type { FuelLog, Plane } from '@/lib/types';
 import {
   Download,
   PlusCircle,
@@ -66,9 +69,11 @@ import { useI18n } from '@/context/i18n-context';
 const AddFuelLogDialog = ({
   onAddFuelLog,
   fuelLogs,
+  planes,
 }: {
   onAddFuelLog: (values: any) => void;
   fuelLogs: FuelLog[];
+  planes: Plane[];
 }) => {
   const [open, setOpen] = React.useState(false);
   const { t } = useI18n();
@@ -139,10 +144,12 @@ const AddRefuelLogDialog = ({
 
 const EditFuelLogDialog = ({
   log,
+  planes,
   onUpdate,
   onOpenChange,
 }: {
   log: FuelLog;
+  planes: Plane[];
   onUpdate: (values: any) => void;
   onOpenChange: (open: boolean) => void;
 }) => {
@@ -177,6 +184,10 @@ export default function FuelPage() {
     'fuelLogs',
     initialFuelLogs
   );
+  const [planes, setPlanes] = useLocalStorage<Plane[]>(
+    'planes',
+    initialPlanes
+  );
   const [logToEdit, setLogToEdit] = React.useState<FuelLog | null>(null);
   const { toast } = useToast();
   const { t } = useI18n();
@@ -192,10 +203,18 @@ export default function FuelPage() {
   const handleAddFuelLog = (newLogData: any) => {
     let planeId;
     if (newLogData.customerType === 'Company') {
-      planeId =
-        newLogData.aircraftSelection === 'new'
-          ? newLogData.newPlaneId
-          : newLogData.planeId;
+      if (newLogData.aircraftSelection === 'new') {
+        planeId = newLogData.newPlaneId;
+        const newPlane: Plane = {
+          id: planeId,
+          name: newLogData.newPlaneName,
+          totalHours: 0, // New plane starts with 0 hours
+          nextMaintenanceHours: 100,
+        };
+        setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
+      } else {
+        planeId = newLogData.planeId;
+      }
     }
 
     const start = Number(newLogData.startQuantity);
@@ -314,6 +333,7 @@ export default function FuelPage() {
             <AddFuelLogDialog
               onAddFuelLog={handleAddFuelLog}
               fuelLogs={sortedFuelLogs}
+              planes={planes}
             />
           </div>
         }
@@ -396,6 +416,7 @@ export default function FuelPage() {
       {logToEdit && (
         <EditFuelLogDialog
           log={logToEdit}
+          planes={planes}
           onUpdate={handleUpdateFuelLog}
           onOpenChange={(open) => !open && setLogToEdit(null)}
         />

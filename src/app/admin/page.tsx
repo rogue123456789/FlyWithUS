@@ -13,6 +13,14 @@ import { UserManagement } from './_components/user-management';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import {
+  planes as initialPlanes,
+  employees as initialEmployees,
+} from '@/lib/data';
+import type { Plane, Employee } from '@/lib/types';
+import { AircraftManagement } from './_components/aircraft-management';
+import { EmployeeManagement } from './_components/employee-management';
 
 export default function AdminPage() {
   const firestore = useFirestore();
@@ -38,10 +46,19 @@ export default function AdminPage() {
     error: openError,
   } = useCollection(openUsersCollection);
 
+  const [planes, setPlanes] = useLocalStorage<Plane[]>(
+    'planes',
+    initialPlanes
+  );
+  const [employees, setEmployees] = useLocalStorage<Employee[]>(
+    'employees',
+    initialEmployees
+  );
+
   const allUsers = React.useMemo(() => {
     const usersMap = new Map();
 
-    adminUsers?.forEach(user => {
+    adminUsers?.forEach((user) => {
       if (usersMap.has(user.id)) {
         usersMap.set(user.id, { ...usersMap.get(user.id), role: 'admin' });
       } else {
@@ -49,7 +66,7 @@ export default function AdminPage() {
       }
     });
 
-    openUsers?.forEach(user => {
+    openUsers?.forEach((user) => {
       if (!usersMap.has(user.id)) {
         usersMap.set(user.id, { ...user, role: 'open' });
       }
@@ -67,9 +84,9 @@ export default function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('AdminPage.cardTitle')}</CardTitle>
+          <CardTitle>{t('AdminPage.userRoleCardTitle')}</CardTitle>
           <CardDescription>
-            {t('AdminPage.cardDescription')}
+            {t('AdminPage.userRoleCardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -80,6 +97,30 @@ export default function AdminPage() {
             </p>
           )}
           {!isLoading && !error && <UserManagement users={allUsers} />}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('AdminPage.employeeCardTitle')}</CardTitle>
+          <CardDescription>
+            {t('AdminPage.employeeCardDescription')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EmployeeManagement employees={employees} setEmployees={setEmployees} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('AdminPage.aircraftCardTitle')}</CardTitle>
+          <CardDescription>
+            {t('AdminPage.aircraftCardDescription')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AircraftManagement planes={planes} setPlanes={setPlanes} />
         </CardContent>
       </Card>
     </div>

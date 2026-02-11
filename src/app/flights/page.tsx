@@ -18,8 +18,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { flightLogs as initialFlightLogs, planes } from '@/lib/data';
-import type { FlightLog } from '@/lib/types';
+import {
+  flightLogs as initialFlightLogs,
+  planes as initialPlanes,
+} from '@/lib/data';
+import type { FlightLog, Plane } from '@/lib/types';
 import {
   Download,
   PlusCircle,
@@ -62,8 +65,10 @@ import { useI18n } from '@/context/i18n-context';
 
 const AddFlightLogDialog = ({
   onAddFlightLog,
+  planes,
 }: {
   onAddFlightLog: (values: any) => void;
+  planes: Plane[];
 }) => {
   const [open, setOpen] = React.useState(false);
   const { t } = useI18n();
@@ -96,10 +101,12 @@ const AddFlightLogDialog = ({
 
 const EditFlightLogDialog = ({
   log,
+  planes,
   onUpdate,
   onOpenChange,
 }: {
   log: FlightLog;
+  planes: Plane[];
   onUpdate: (values: any) => void;
   onOpenChange: (open: boolean) => void;
 }) => {
@@ -135,13 +142,23 @@ export default function FlightsPage() {
     'flightLogs',
     initialFlightLogs
   );
+  const [planes, setPlanes] = useLocalStorage<Plane[]>(
+    'planes',
+    initialPlanes
+  );
   const [logToEdit, setLogToEdit] = React.useState<FlightLog | null>(null);
 
   const handleAddFlightLog = (newLogData: any) => {
     let planeId;
     if (newLogData.aircraftSelection === 'new') {
       planeId = newLogData.newPlaneId;
-      // In a real app, you'd also add the new plane to your planes list
+      const newPlane: Plane = {
+        id: planeId,
+        name: newLogData.newPlaneName,
+        totalHours: newLogData.flightDuration,
+        nextMaintenanceHours: 100, // Default maintenance hours
+      };
+      setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
     } else {
       planeId = newLogData.planeId;
     }
@@ -169,7 +186,13 @@ export default function FlightsPage() {
     let planeId;
     if (updatedLogData.aircraftSelection === 'new') {
       planeId = updatedLogData.newPlaneId;
-      // In a real app, you'd also add the new plane to your planes list
+      const newPlane: Plane = {
+        id: planeId,
+        name: updatedLogData.newPlaneName,
+        totalHours: updatedLogData.flightDuration,
+        nextMaintenanceHours: 100,
+      };
+      setPlanes((prevPlanes) => [...prevPlanes, newPlane]);
     } else {
       planeId = updatedLogData.planeId;
     }
@@ -239,7 +262,9 @@ export default function FlightsPage() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{t('FlightsPage.cancel')}</AlertDialogCancel>
+                  <AlertDialogCancel>
+                    {t('FlightsPage.cancel')}
+                  </AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearLogs}>
                     {t('FlightsPage.continue')}
                   </AlertDialogAction>
@@ -250,7 +275,10 @@ export default function FlightsPage() {
               <Download className="mr-2 h-4 w-4" />
               {t('FlightsPage.export')}
             </Button>
-            <AddFlightLogDialog onAddFlightLog={handleAddFlightLog} />
+            <AddFlightLogDialog
+              onAddFlightLog={handleAddFlightLog}
+              planes={planes}
+            />
           </div>
         }
       />
@@ -314,6 +342,7 @@ export default function FlightsPage() {
       {logToEdit && (
         <EditFlightLogDialog
           log={logToEdit}
+          planes={planes}
           onUpdate={handleUpdateFlightLog}
           onOpenChange={(open) => !open && setLogToEdit(null)}
         />

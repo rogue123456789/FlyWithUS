@@ -20,11 +20,30 @@ import { StatsCard } from '@/components/dashboard/stats-card';
 import { FlightHoursChart } from '@/components/dashboard/flight-hours-chart';
 import { MaintenanceSchedule } from '@/components/dashboard/maintenance-schedule';
 import { RecentLogs } from '@/components/dashboard/recent-logs';
-import { flightLogs, fuelLogs, employees, planes } from '@/lib/data';
+import {
+  flightLogs as initialFlightLogs,
+  fuelLogs as initialFuelLogs,
+  employees as initialEmployees,
+  planes as initialPlanes,
+} from '@/lib/data';
 import { useI18n } from '@/context/i18n-context';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { FlightLog, FuelLog, Employee, Plane } from '@/lib/types';
 
 export default function DashboardPage() {
   const { t } = useI18n();
+
+  const [flightLogs] = useLocalStorage<FlightLog[]>(
+    'flightLogs',
+    initialFlightLogs
+  );
+  const [fuelLogs] = useLocalStorage<FuelLog[]>('fuelLogs', initialFuelLogs);
+  const [employees] = useLocalStorage<Employee[]>(
+    'employees',
+    initialEmployees
+  );
+  const [planes] = useLocalStorage<Plane[]>('planes', initialPlanes);
+
   const totalFlightHours = flightLogs.reduce(
     (sum, log) => sum + log.flightDuration,
     0
