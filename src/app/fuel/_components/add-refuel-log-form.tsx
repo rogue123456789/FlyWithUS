@@ -15,21 +15,26 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/context/i18n-context';
 
-const formSchema = z.object({
-  date: z.string().min(1, 'A date is required.'),
-  litersRefueled: z.coerce
-    .number()
-    .min(0.1, { message: 'Liters must be positive.' }),
-  cost: z.coerce.number().min(0.01, { message: 'Cost must be positive.' }),
-});
+const getFormSchema = (t: (key: string) => string) =>
+  z.object({
+    date: z.string().min(1, t('AddRefuelLogForm.dateRequired')),
+    litersRefueled: z.coerce
+      .number()
+      .min(0.1, { message: t('AddRefuelLogForm.litersError') }),
+    cost: z.coerce.number().min(0.01, { message: t('AddRefuelLogForm.costError') }),
+  });
 
 type AddRefuelLogFormProps = {
-  onFormSubmit: (values: z.infer<typeof formSchema>) => void;
+  onFormSubmit: (values: z.infer<ReturnType<typeof getFormSchema>>) => void;
 };
 
 export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
   const { toast } = useToast();
+  const { t } = useI18n();
+  const formSchema = getFormSchema(t);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,10 +45,11 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, this would submit to a server action or API endpoint
     toast({
-      title: 'Refuel Logged',
-      description: `Successfully logged a refuel of ${values.litersRefueled} liters.`,
+      title: t('AddRefuelLogForm.toastLoggedTitle'),
+      description: t('AddRefuelLogForm.toastLoggedDescription', {
+        liters: values.litersRefueled,
+      }),
     });
     onFormSubmit(values);
   }
@@ -56,7 +62,7 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date of Refuel</FormLabel>
+              <FormLabel>{t('AddRefuelLogForm.date')}</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -69,7 +75,7 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
           name="litersRefueled"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Liters Refueled</FormLabel>
+              <FormLabel>{t('AddRefuelLogForm.litersRefueled')}</FormLabel>
               <FormControl>
                 <Input type="number" step="0.1" {...field} />
               </FormControl>
@@ -82,12 +88,12 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
           name="cost"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Total Cost</FormLabel>
+              <FormLabel>{t('AddRefuelLogForm.totalCost')}</FormLabel>
               <FormControl>
                 <Input
                   type="number"
                   step="0.01"
-                  placeholder="e.g. 150.75"
+                  placeholder={t('AddRefuelLogForm.costPlaceholder')}
                   {...field}
                 />
               </FormControl>
@@ -96,7 +102,7 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
           )}
         />
         <Button type="submit" className="w-full">
-          Log Refuel
+          {t('AddRefuelLogForm.logRefuel')}
         </Button>
       </form>
     </Form>

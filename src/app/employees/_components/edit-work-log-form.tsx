@@ -15,16 +15,18 @@ import {
 import { Input } from '@/components/ui/input';
 import type { WorkLog } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
+import { useI18n } from '@/context/i18n-context';
 
-const formSchema = z.object({
-  date: z.string().min(1, 'A date is required.'),
-  clockInTime: z.string().min(1, 'Clock-in time is required.'),
-  clockOutTime: z.string().min(1, 'Clock-out time is required.'),
-});
+const getFormSchema = (t: (key: string) => string) =>
+  z.object({
+    date: z.string().min(1, t('EditWorkLogForm.dateRequired')),
+    clockInTime: z.string().min(1, t('EditWorkLogForm.clockInTimeRequired')),
+    clockOutTime: z.string().min(1, t('EditWorkLogForm.clockOutTimeRequired')),
+  });
 
 type EditWorkLogFormProps = {
   log: WorkLog;
-  onSubmit: (values: z.infer<typeof formSchema>) => void;
+  onSubmit: (values: z.infer<ReturnType<typeof getFormSchema>>) => void;
 };
 
 // Helper to format ISO date to HH:mm for time input
@@ -34,6 +36,9 @@ const formatToTimeInput = (isoString: string) => {
 };
 
 export function EditWorkLogForm({ log, onSubmit }: EditWorkLogFormProps) {
+  const { t } = useI18n();
+  const formSchema = getFormSchema(t);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -56,7 +61,7 @@ export function EditWorkLogForm({ log, onSubmit }: EditWorkLogFormProps) {
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date</FormLabel>
+              <FormLabel>{t('EditWorkLogForm.date')}</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -70,7 +75,7 @@ export function EditWorkLogForm({ log, onSubmit }: EditWorkLogFormProps) {
             name="clockInTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Clock In Time</FormLabel>
+                <FormLabel>{t('EditWorkLogForm.clockInTime')}</FormLabel>
                 <FormControl>
                   <Input type="time" {...field} />
                 </FormControl>
@@ -83,7 +88,7 @@ export function EditWorkLogForm({ log, onSubmit }: EditWorkLogFormProps) {
             name="clockOutTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Clock Out Time</FormLabel>
+                <FormLabel>{t('EditWorkLogForm.clockOutTime')}</FormLabel>
                 <FormControl>
                   <Input type="time" {...field} />
                 </FormControl>
@@ -94,7 +99,7 @@ export function EditWorkLogForm({ log, onSubmit }: EditWorkLogFormProps) {
         </div>
 
         <Button type="submit" className="w-full">
-          Save Changes
+          {t('EditWorkLogForm.saveChanges')}
         </Button>
       </form>
     </Form>

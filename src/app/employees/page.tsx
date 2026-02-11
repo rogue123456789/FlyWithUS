@@ -73,6 +73,7 @@ import {
 } from 'date-fns';
 import { downloadCsv } from '@/lib/utils';
 import { EditWorkLogForm } from './_components/edit-work-log-form';
+import { useI18n } from '@/context/i18n-context';
 
 function formatDuration(ms: number) {
   if (ms < 0) ms = 0;
@@ -112,6 +113,7 @@ export default function EmployeesPage() {
   >(null);
   const [logToEdit, setLogToEdit] = React.useState<WorkLog | null>(null);
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
 
@@ -130,8 +132,10 @@ export default function EmployeesPage() {
     const employee = employees.find((e) => e.id === employeeId);
     if (employee) {
       toast({
-        title: 'Clocked In',
-        description: `${employee.name} has been clocked in.`,
+        title: t('EmployeesPage.toastClockInTitle'),
+        description: t('EmployeesPage.toastClockInDescription', {
+          name: employee.name,
+        }),
       });
     }
   };
@@ -163,18 +167,19 @@ export default function EmployeesPage() {
       )
     );
     toast({
-      title: 'Clocked Out',
-      description: `${
-        employee.name
-      } has been clocked out. Work duration: ${formatDuration(duration)}`,
+      title: t('EmployeesPage.toastClockOutTitle'),
+      description: t('EmployeesPage.toastClockOutDescription', {
+        name: employee.name,
+        duration: formatDuration(duration),
+      }),
     });
   };
 
   const handleClearLogs = () => {
     setWorkLogs([]);
     toast({
-      title: 'Work Logs Cleared',
-      description: 'All work logs have been deleted.',
+      title: t('EmployeesPage.toastClearedTitle'),
+      description: t('EmployeesPage.toastClearedDescription'),
     });
   };
 
@@ -235,39 +240,41 @@ export default function EmployeesPage() {
     setWorkLogs((prev) =>
       prev.map((l) => (l.id === updatedLog.id ? updatedLog : l))
     );
-    toast({ title: 'Work Log Updated' });
+    toast({ title: t('EmployeesPage.toastUpdatedTitle') });
     setLogToEdit(null);
   };
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Employees"
+        title={t('EmployeesPage.title')}
         actions={
           <div className="flex items-center gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline">
-                  <Trash2 /> Clear Logs
+                  <Trash2 /> {t('EmployeesPage.clearLogs')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {t('EmployeesPage.clearLogsDialogTitle')}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete all work logs.
+                    {t('EmployeesPage.clearLogsDialogDescription')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t('EmployeesPage.cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearLogs}>
-                    Continue
+                    {t('EmployeesPage.continue')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
             <Button variant="outline" onClick={handleExport}>
-              <Download /> Export
+              <Download /> {t('EmployeesPage.export')}
             </Button>
           </div>
         }
@@ -276,7 +283,7 @@ export default function EmployeesPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock /> Time Clock
+            <Clock /> {t('EmployeesPage.timeClockCardTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -285,7 +292,9 @@ export default function EmployeesPage() {
             value={selectedEmployeeId ?? ''}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select an employee" />
+              <SelectValue
+                placeholder={t('EmployeesPage.selectEmployeePlaceholder')}
+              />
             </SelectTrigger>
             <SelectContent>
               {employees.map((employee) => (
@@ -300,7 +309,7 @@ export default function EmployeesPage() {
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <p>
-                  Clocked in at:{' '}
+                  {t('EmployeesPage.clockedInAt')}{' '}
                   {selectedEmployee.lastClockIn &&
                     new Date(selectedEmployee.lastClockIn).toLocaleTimeString(
                       [],
@@ -312,7 +321,7 @@ export default function EmployeesPage() {
                     )}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Session duration:{' '}
+                  {t('EmployeesPage.sessionDuration')}{' '}
                   {selectedEmployee.lastClockIn && (
                     <LiveTimer startTime={selectedEmployee.lastClockIn} />
                   )}
@@ -322,21 +331,23 @@ export default function EmployeesPage() {
                 variant="destructive"
                 onClick={() => handleClockOut(selectedEmployee.id)}
               >
-                <LogOut /> Clock Out
+                <LogOut /> {t('EmployeesPage.clockOut')}
               </Button>
             </div>
           ) : (
             <div className="flex items-center justify-between rounded-lg border p-4">
               <p>
                 {selectedEmployee
-                  ? `${selectedEmployee.name} is clocked out.`
-                  : 'Please select an employee.'}
+                  ? t('EmployeesPage.clockedOutMessage', {
+                      name: selectedEmployee.name,
+                    })
+                  : t('EmployeesPage.selectEmployeeMessage')}
               </p>
               <Button
                 onClick={() => handleClockIn(selectedEmployeeId!)}
                 disabled={!selectedEmployeeId}
               >
-                <LogIn /> Clock In
+                <LogIn /> {t('EmployeesPage.clockIn')}
               </Button>
             </div>
           )}
@@ -345,28 +356,30 @@ export default function EmployeesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Work Log History</CardTitle>
+          <CardTitle>{t('EmployeesPage.workLogHistoryCardTitle')}</CardTitle>
           <CardDescription>
-            A record of all completed work sessions.
+            {t('EmployeesPage.workLogHistoryCardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Clock In</TableHead>
-                <TableHead>Clock Out</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('EmployeesPage.tableEmployee')}</TableHead>
+                <TableHead>{t('EmployeesPage.tableDate')}</TableHead>
+                <TableHead>{t('EmployeesPage.tableClockIn')}</TableHead>
+                <TableHead>{t('EmployeesPage.tableClockOut')}</TableHead>
+                <TableHead>{t('EmployeesPage.tableDuration')}</TableHead>
+                <TableHead className="text-right">
+                  {t('EmployeesPage.tableActions')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedWorkLogs.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center">
-                    No work logs yet.
+                    {t('EmployeesPage.noWorkLogs')}
                   </TableCell>
                 </TableRow>
               )}
@@ -408,7 +421,7 @@ export default function EmployeesPage() {
                       <DropdownMenuContent>
                         <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
                           <Pencil className="mr-2 h-4 w-4" />
-                          Edit
+                          {t('EmployeesPage.edit')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -427,7 +440,7 @@ export default function EmployeesPage() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Work Log</DialogTitle>
+              <DialogTitle>{t('EmployeesPage.dialogEditTitle')}</DialogTitle>
             </DialogHeader>
             <EditWorkLogForm log={logToEdit} onSubmit={handleUpdateWorkLog} />
           </DialogContent>

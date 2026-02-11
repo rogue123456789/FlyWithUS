@@ -23,53 +23,55 @@ import {
 import type { Plane, FlightLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useI18n } from '@/context/i18n-context';
 
-const formSchema = z
-  .object({
-    date: z.string().min(1, 'A date is required.'),
-    pilotName: z.string().min(2, { message: 'Pilot name is required.' }),
-    aircraftSelection: z.enum(['existing', 'new']).default('existing'),
-    planeId: z.string().optional(),
-    newPlaneId: z.string().optional(),
-    newPlaneName: z.string().optional(),
-    takeoffLocation: z
-      .string()
-      .min(2, { message: 'Takeoff location is required.' }),
-    landingLocation: z
-      .string()
-      .min(2, { message: 'Landing location is required.' }),
-    flightDuration: z.coerce
-      .number()
-      .min(0.1, { message: 'Duration must be at least 0.1 hours.' }),
-    flightReason: z
-      .string()
-      .min(2, { message: 'Reason for flying is required.' }),
-  })
-  .refine(
-    (data) => {
-      if (data.aircraftSelection === 'existing') {
-        return !!data.planeId;
+const getFormSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      date: z.string().min(1, t('AddFlightLogForm.dateRequired')),
+      pilotName: z.string().min(2, { message: t('AddFlightLogForm.pilotNameRequired') }),
+      aircraftSelection: z.enum(['existing', 'new']).default('existing'),
+      planeId: z.string().optional(),
+      newPlaneId: z.string().optional(),
+      newPlaneName: z.string().optional(),
+      takeoffLocation: z
+        .string()
+        .min(2, { message: t('AddFlightLogForm.takeoffLocationRequired') }),
+      landingLocation: z
+        .string()
+        .min(2, { message: t('AddFlightLogForm.landingLocationRequired') }),
+      flightDuration: z.coerce
+        .number()
+        .min(0.1, { message: t('AddFlightLogForm.flightDurationError') }),
+      flightReason: z
+        .string()
+        .min(2, { message: t('AddFlightLogForm.flightReasonRequired') }),
+    })
+    .refine(
+      (data) => {
+        if (data.aircraftSelection === 'existing') {
+          return !!data.planeId;
+        }
+        if (data.aircraftSelection === 'new') {
+          return (
+            data.newPlaneId &&
+            data.newPlaneId.length > 1 &&
+            data.newPlaneName &&
+            data.newPlaneName.length > 1
+          );
+        }
+        return true;
+      },
+      {
+        message: t('AddFlightLogForm.aircraftSelectionError'),
+        path: ['aircraftSelection'],
       }
-      if (data.aircraftSelection === 'new') {
-        return (
-          data.newPlaneId &&
-          data.newPlaneId.length > 1 &&
-          data.newPlaneName &&
-          data.newPlaneName.length > 1
-        );
-      }
-      return true;
-    },
-    {
-      message: 'Please select an aircraft or provide details for a new one.',
-      path: ['aircraftSelection'],
-    }
-  );
+    );
 
 type EditFlightLogFormProps = {
   log: FlightLog;
   planes: Plane[];
-  onSubmit: (values: z.infer<typeof formSchema>) => void;
+  onSubmit: (values: z.infer<ReturnType<typeof getFormSchema>>) => void;
 };
 
 export function EditFlightLogForm({
@@ -77,6 +79,8 @@ export function EditFlightLogForm({
   planes,
   onSubmit,
 }: EditFlightLogFormProps) {
+  const { t } = useI18n();
+  const formSchema = getFormSchema(t);
   const isExistingPlane = planes.some((p) => p.id === log.planeId);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -113,7 +117,7 @@ export function EditFlightLogForm({
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date</FormLabel>
+              <FormLabel>{t('AddFlightLogForm.date')}</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -126,9 +130,12 @@ export function EditFlightLogForm({
           name="pilotName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Pilot Name</FormLabel>
+              <FormLabel>{t('AddFlightLogForm.pilotName')}</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input
+                  placeholder={t('AddFlightLogForm.pilotName')}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -139,7 +146,7 @@ export function EditFlightLogForm({
           name="aircraftSelection"
           render={({ field }) => (
             <FormItem className="space-y-2">
-              <FormLabel>Aircraft</FormLabel>
+              <FormLabel>{t('AddFlightLogForm.aircraft')}</FormLabel>
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
@@ -151,14 +158,16 @@ export function EditFlightLogForm({
                       <RadioGroupItem value="existing" />
                     </FormControl>
                     <FormLabel className="font-normal">
-                      Existing Aircraft
+                      {t('AddFlightLogForm.existingAircraft')}
                     </FormLabel>
                   </FormItem>
                   <FormItem className="flex items-center space-x-2 space-y-0">
                     <FormControl>
                       <RadioGroupItem value="new" />
                     </FormControl>
-                    <FormLabel className="font-normal">New Aircraft</FormLabel>
+                    <FormLabel className="font-normal">
+                      {t('AddFlightLogForm.newAircraft')}
+                    </FormLabel>
                   </FormItem>
                 </RadioGroup>
               </FormControl>
@@ -173,14 +182,18 @@ export function EditFlightLogForm({
             name="planeId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Select Aircraft</FormLabel>
+                <FormLabel>{t('AddFlightLogForm.selectAircraft')}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select an aircraft" />
+                      <SelectValue
+                        placeholder={t(
+                          'AddFlightLogForm.selectAircraftPlaceholder'
+                        )}
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -204,10 +217,12 @@ export function EditFlightLogForm({
               name="newPlaneId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>New Aircraft ID</FormLabel>
+                  <FormLabel>{t('AddFlightLogForm.newAircraftId')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g. N99999"
+                      placeholder={t(
+                        'AddFlightLogForm.newAircraftIdPlaceholder'
+                      )}
                       {...field}
                       value={field.value ?? ''}
                     />
@@ -221,10 +236,12 @@ export function EditFlightLogForm({
               name="newPlaneName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>New Aircraft Name</FormLabel>
+                  <FormLabel>{t('AddFlightLogForm.newAircraftName')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g. Cessna 152"
+                      placeholder={t(
+                        'AddFlightLogForm.newAircraftNamePlaceholder'
+                      )}
                       {...field}
                       value={field.value ?? ''}
                     />
@@ -242,9 +259,14 @@ export function EditFlightLogForm({
             name="takeoffLocation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Took Off From</FormLabel>
+                <FormLabel>{t('AddFlightLogForm.tookOffFrom')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. KSQL" {...field} />
+                  <Input
+                    placeholder={t(
+                      'AddFlightLogForm.tookOffFromPlaceholder'
+                    )}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -255,9 +277,12 @@ export function EditFlightLogForm({
             name="landingLocation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Landed At</FormLabel>
+                <FormLabel>{t('AddFlightLogForm.landedAt')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. KPAO" {...field} />
+                  <Input
+                    placeholder={t('AddFlightLogForm.landedAtPlaceholder')}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -270,7 +295,7 @@ export function EditFlightLogForm({
           name="flightDuration"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Flight Duration (hours)</FormLabel>
+              <FormLabel>{t('AddFlightLogForm.flightDuration')}</FormLabel>
               <FormControl>
                 <Input type="number" step="0.1" {...field} />
               </FormControl>
@@ -284,16 +309,21 @@ export function EditFlightLogForm({
           name="flightReason"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Reason for Flying</FormLabel>
+              <FormLabel>{t('AddFlightLogForm.reasonForFlying')}</FormLabel>
               <FormControl>
-                <Textarea placeholder="e.g. Training flight" {...field} />
+                <Textarea
+                  placeholder={t(
+                    'AddFlightLogForm.reasonForFlyingPlaceholder'
+                  )}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button type="submit" className="w-full">
-          Save Changes
+          {t('AddFlightLogForm.saveChanges')}
         </Button>
       </form>
     </Form>

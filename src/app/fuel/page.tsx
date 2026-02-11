@@ -61,6 +61,7 @@ import { format, parseISO } from 'date-fns';
 import { downloadCsv } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useI18n } from '@/context/i18n-context';
 
 const AddFuelLogDialog = ({
   onAddFuelLog,
@@ -70,6 +71,7 @@ const AddFuelLogDialog = ({
   fuelLogs: FuelLog[];
 }) => {
   const [open, setOpen] = React.useState(false);
+  const { t } = useI18n();
 
   const handleFormSubmit = (values: any) => {
     onAddFuelLog(values);
@@ -81,14 +83,14 @@ const AddFuelLogDialog = ({
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Log Fuel
+          {t('FuelPage.logFuel')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Log a New Fuel Transaction</DialogTitle>
+          <DialogTitle>{t('FuelPage.addLogDialogTitle')}</DialogTitle>
           <DialogDescription>
-            Fill in the details for the fuel transaction.
+            {t('FuelPage.addLogDialogDescription')}
           </DialogDescription>
         </DialogHeader>
         <AddFuelLogForm
@@ -107,6 +109,7 @@ const AddRefuelLogDialog = ({
   onAddRefuelLog: (values: any) => void;
 }) => {
   const [open, setOpen] = React.useState(false);
+  const { t } = useI18n();
 
   const handleFormSubmit = (values: any) => {
     onAddRefuelLog(values);
@@ -118,14 +121,14 @@ const AddRefuelLogDialog = ({
       <DialogTrigger asChild>
         <Button variant="outline">
           <Fuel className="mr-2 h-4 w-4" />
-          Refueling
+          {t('FuelPage.refueling')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Log a New Refuel</DialogTitle>
+          <DialogTitle>{t('FuelPage.addRefuelDialogTitle')}</DialogTitle>
           <DialogDescription>
-            Fill in the details for the refueling event.
+            {t('FuelPage.addRefuelDialogDescription')}
           </DialogDescription>
         </DialogHeader>
         <AddRefuelLogForm onFormSubmit={handleFormSubmit} />
@@ -143,6 +146,8 @@ const EditFuelLogDialog = ({
   onUpdate: (values: any) => void;
   onOpenChange: (open: boolean) => void;
 }) => {
+  const { t } = useI18n();
+
   const handleFormSubmit = (values: any) => {
     onUpdate({ ...values, id: log.id });
     onOpenChange(false);
@@ -152,9 +157,9 @@ const EditFuelLogDialog = ({
     <Dialog open={!!log} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Fuel Log</DialogTitle>
+          <DialogTitle>{t('FuelPage.editDialogTitle')}</DialogTitle>
           <DialogDescription>
-            Update the details for this fuel transaction.
+            {t('FuelPage.editDialogDescription')}
           </DialogDescription>
         </DialogHeader>
         <EditFuelLogForm
@@ -174,6 +179,7 @@ export default function FuelPage() {
   );
   const [logToEdit, setLogToEdit] = React.useState<FuelLog | null>(null);
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const sortedFuelLogs = React.useMemo(() => {
     return [...fuelLogs].sort((a, b) => {
@@ -249,8 +255,8 @@ export default function FuelPage() {
       prevLogs.map((log) => (log.id === updatedLog.id ? updatedLog : log))
     );
     toast({
-      title: 'Fuel Log Updated',
-      description: 'The transaction has been updated.',
+      title: t('FuelPage.toastUpdatedTitle'),
+      description: t('FuelPage.toastUpdatedDescription'),
     });
     setLogToEdit(null);
   };
@@ -258,8 +264,8 @@ export default function FuelPage() {
   const handleClearLogs = () => {
     setFuelLogs([]);
     toast({
-      title: 'Fuel Logs Cleared',
-      description: 'All fuel logs have been deleted.',
+      title: t('FuelPage.toastClearedTitle'),
+      description: t('FuelPage.toastClearedDescription'),
     });
   };
 
@@ -273,35 +279,36 @@ export default function FuelPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Fuel Logs"
+        title={t('FuelPage.title')}
         actions={
           <div className="flex items-center gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline">
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Clear Logs
+                  {t('FuelPage.clearLogs')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {t('FuelPage.clearLogsDialogTitle')}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    all fuel logs.
+                    {t('FuelPage.clearLogsDialogDescription')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t('FuelPage.cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearLogs}>
-                    Continue
+                    {t('FuelPage.continue')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
-              Export
+              {t('FuelPage.export')}
             </Button>
             <AddRefuelLogDialog onAddRefuelLog={handleAddRefuelLog} />
             <AddFuelLogDialog
@@ -314,22 +321,24 @@ export default function FuelPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Fuel Transactions</CardTitle>
+          <CardTitle>{t('FuelPage.allTransactionsCardTitle')}</CardTitle>
           <CardDescription>
-            A comprehensive list of all recorded fuel logs.
+            {t('FuelPage.allTransactionsCardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Plane</TableHead>
-                <TableHead>Start (L)</TableHead>
-                <TableHead>Dispensed (L)</TableHead>
-                <TableHead>Left Over (L)</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('FuelPage.tableDate')}</TableHead>
+                <TableHead>{t('FuelPage.tableCustomer')}</TableHead>
+                <TableHead>{t('FuelPage.tablePlane')}</TableHead>
+                <TableHead>{t('FuelPage.tableStart')}</TableHead>
+                <TableHead>{t('FuelPage.tableDispensed')}</TableHead>
+                <TableHead>{t('FuelPage.tableLeftOver')}</TableHead>
+                <TableHead className="text-right">
+                  {t('FuelPage.tableActions')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -373,7 +382,7 @@ export default function FuelPage() {
                       <DropdownMenuContent>
                         <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
                           <Pencil className="mr-2 h-4 w-4" />
-                          Edit
+                          {t('FuelPage.edit')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

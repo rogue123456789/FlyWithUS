@@ -58,6 +58,7 @@ import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { downloadCsv } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useI18n } from '@/context/i18n-context';
 
 const AddFlightLogDialog = ({
   onAddFlightLog,
@@ -65,6 +66,7 @@ const AddFlightLogDialog = ({
   onAddFlightLog: (values: any) => void;
 }) => {
   const [open, setOpen] = React.useState(false);
+  const { t } = useI18n();
 
   const handleFormSubmit = (values: any) => {
     onAddFlightLog(values);
@@ -76,14 +78,14 @@ const AddFlightLogDialog = ({
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Record flight hours
+          {t('FlightsPage.recordFlightHours')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Record Flight Hours</DialogTitle>
+          <DialogTitle>{t('FlightsPage.addDialogTitle')}</DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new flight to the log.
+            {t('FlightsPage.addDialogDescription')}
           </DialogDescription>
         </DialogHeader>
         <AddFlightLogForm planes={planes} onSubmit={handleFormSubmit} />
@@ -101,6 +103,7 @@ const EditFlightLogDialog = ({
   onUpdate: (values: any) => void;
   onOpenChange: (open: boolean) => void;
 }) => {
+  const { t } = useI18n();
   const handleFormSubmit = (values: any) => {
     onUpdate({ ...values, id: log.id });
     onOpenChange(false);
@@ -110,9 +113,9 @@ const EditFlightLogDialog = ({
     <Dialog open={!!log} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Edit Flight Log</DialogTitle>
+          <DialogTitle>{t('FlightsPage.editDialogTitle')}</DialogTitle>
           <DialogDescription>
-            Update the details for this flight log.
+            {t('FlightsPage.editDialogDescription')}
           </DialogDescription>
         </DialogHeader>
         <EditFlightLogForm
@@ -127,6 +130,7 @@ const EditFlightLogDialog = ({
 
 export default function FlightsPage() {
   const { toast } = useToast();
+  const { t } = useI18n();
   const [flightLogs, setFlightLogs] = useLocalStorage<FlightLog[]>(
     'flightLogs',
     initialFlightLogs
@@ -154,8 +158,10 @@ export default function FlightsPage() {
     };
     setFlightLogs((prevLogs) => [newLog, ...prevLogs]);
     toast({
-      title: 'Flight Hours Recorded',
-      description: `Successfully recorded flight for ${newLogData.pilotName}.`,
+      title: t('FlightsPage.toastAddedTitle'),
+      description: t('FlightsPage.toastAddedDescription', {
+        pilotName: newLogData.pilotName,
+      }),
     });
   };
 
@@ -183,8 +189,8 @@ export default function FlightsPage() {
       prevLogs.map((log) => (log.id === finalLog.id ? finalLog : log))
     );
     toast({
-      title: 'Flight Log Updated',
-      description: 'The flight log has been successfully updated.',
+      title: t('FlightsPage.toastUpdatedTitle'),
+      description: t('FlightsPage.toastUpdatedDescription'),
     });
     setLogToEdit(null);
   };
@@ -192,8 +198,8 @@ export default function FlightsPage() {
   const handleClearLogs = () => {
     setFlightLogs([]);
     toast({
-      title: 'Flight Logs Cleared',
-      description: 'All flight logs have been deleted.',
+      title: t('FlightsPage.toastClearedTitle'),
+      description: t('FlightsPage.toastClearedDescription'),
     });
   };
 
@@ -213,35 +219,36 @@ export default function FlightsPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Flight Logs"
+        title={t('FlightsPage.title')}
         actions={
           <div className="flex items-center gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline">
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Clear Logs
+                  {t('FlightsPage.clearLogs')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {t('FlightsPage.clearLogsDialogTitle')}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    all flight logs.
+                    {t('FlightsPage.clearLogsDialogDescription')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t('FlightsPage.cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearLogs}>
-                    Continue
+                    {t('FlightsPage.continue')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
-              Export
+              {t('FlightsPage.export')}
             </Button>
             <AddFlightLogDialog onAddFlightLog={handleAddFlightLog} />
           </div>
@@ -250,23 +257,25 @@ export default function FlightsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Flights</CardTitle>
+          <CardTitle>{t('FlightsPage.allFlightsCardTitle')}</CardTitle>
           <CardDescription>
-            A comprehensive list of all recorded flights.
+            {t('FlightsPage.allFlightsCardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Pilot</TableHead>
-                <TableHead>Plane</TableHead>
-                <TableHead>From</TableHead>
-                <TableHead>To</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('FlightsPage.tableDate')}</TableHead>
+                <TableHead>{t('FlightsPage.tablePilot')}</TableHead>
+                <TableHead>{t('FlightsPage.tablePlane')}</TableHead>
+                <TableHead>{t('FlightsPage.tableFrom')}</TableHead>
+                <TableHead>{t('FlightsPage.tableTo')}</TableHead>
+                <TableHead>{t('FlightsPage.tableDuration')}</TableHead>
+                <TableHead>{t('FlightsPage.tableReason')}</TableHead>
+                <TableHead className="text-right">
+                  {t('FlightsPage.tableActions')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -291,7 +300,7 @@ export default function FlightsPage() {
                       <DropdownMenuContent>
                         <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
                           <Pencil className="mr-2 h-4 w-4" />
-                          Edit
+                          {t('FlightsPage.edit')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

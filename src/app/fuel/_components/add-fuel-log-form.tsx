@@ -24,51 +24,55 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { FuelLog, Plane } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useI18n } from '@/context/i18n-context';
 
-const formSchema = z
-  .object({
-    date: z.string().min(1, 'A date is required.'),
-    customerType: z.enum(['Company', 'External']),
-    aircraftSelection: z.enum(['existing', 'new']).default('existing'),
-    planeId: z.string().optional(),
-    newPlaneId: z.string().optional(),
-    newPlaneName: z.string().optional(),
-    startQuantity: z.coerce
-      .number()
-      .min(0, { message: 'Start quantity must be a positive number.' }),
-    liters: z.coerce.number().min(0.1, { message: 'Liters must be positive.' }),
-  })
-  .refine((data) => data.startQuantity >= data.liters, {
-    message: 'Liters dispensed cannot be more than start quantity.',
-    path: ['liters'],
-  })
-  .refine(
-    (data) => {
-      if (data.customerType === 'Company') {
-        if (data.aircraftSelection === 'existing') {
-          return !!data.planeId;
+const getFormSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      date: z.string().min(1, t('AddFuelLogForm.dateRequired')),
+      customerType: z.enum(['Company', 'External']),
+      aircraftSelection: z.enum(['existing', 'new']).default('existing'),
+      planeId: z.string().optional(),
+      newPlaneId: z.string().optional(),
+      newPlaneName: z.string().optional(),
+      startQuantity: z.coerce
+        .number()
+        .min(0, { message: t('AddFuelLogForm.startQuantityError') }),
+      liters: z.coerce
+        .number()
+        .min(0.1, { message: t('AddFuelLogForm.litersError') }),
+    })
+    .refine((data) => data.startQuantity >= data.liters, {
+      message: t('AddFuelLogForm.litersDispensedError'),
+      path: ['liters'],
+    })
+    .refine(
+      (data) => {
+        if (data.customerType === 'Company') {
+          if (data.aircraftSelection === 'existing') {
+            return !!data.planeId;
+          }
+          if (data.aircraftSelection === 'new') {
+            return (
+              data.newPlaneId &&
+              data.newPlaneId.length > 1 &&
+              data.newPlaneName &&
+              data.newPlaneName.length > 1
+            );
+          }
         }
-        if (data.aircraftSelection === 'new') {
-          return (
-            data.newPlaneId &&
-            data.newPlaneId.length > 1 &&
-            data.newPlaneName &&
-            data.newPlaneName.length > 1
-          );
-        }
+        return true;
+      },
+      {
+        message: t('AddFuelLogForm.aircraftSelectionError'),
+        path: ['aircraftSelection'],
       }
-      return true;
-    },
-    {
-      message: 'Please select an aircraft or provide details for a new one.',
-      path: ['aircraftSelection'],
-    }
-  );
+    );
 
 type AddFuelLogFormProps = {
   planes: Plane[];
   fuelLogs: FuelLog[];
-  onSubmit: (values: z.infer<typeof formSchema>) => void;
+  onSubmit: (values: z.infer<ReturnType<typeof getFormSchema>>) => void;
 };
 
 export function AddFuelLogForm({
@@ -77,6 +81,9 @@ export function AddFuelLogForm({
   onSubmit,
 }: AddFuelLogFormProps) {
   const { toast } = useToast();
+  const { t } = useI18n();
+  const formSchema = getFormSchema(t);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -125,8 +132,10 @@ export function AddFuelLogForm({
   function handleFormSubmit(values: z.infer<typeof formSchema>) {
     onSubmit(values);
     toast({
-      title: 'Fuel Logged',
-      description: `Successfully logged ${values.liters} liters of fuel.`,
+      title: t('AddFuelLogForm.toastLoggedTitle'),
+      description: t('AddFuelLogForm.toastLoggedDescription', {
+        liters: values.liters,
+      }),
     });
     form.reset();
   }
@@ -142,7 +151,7 @@ export function AddFuelLogForm({
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date</FormLabel>
+              <FormLabel>{t('AddFuelLogForm.date')}</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -155,16 +164,22 @@ export function AddFuelLogForm({
           name="customerType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Customer Type</FormLabel>
+              <FormLabel>{t('AddFuelLogForm.customerType')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select customer type" />
+                    <SelectValue
+                      placeholder={t('AddFuelLogForm.selectCustomerType')}
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Company">Company</SelectItem>
-                  <SelectItem value="External">External</SelectItem>
+                  <SelectItem value="Company">
+                    {t('AddFuelLogForm.company')}
+                  </SelectItem>
+                  <SelectItem value="External">
+                    {t('AddFuelLogForm.external')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -178,7 +193,7 @@ export function AddFuelLogForm({
               name="aircraftSelection"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel>Aircraft</FormLabel>
+                  <FormLabel>{t('AddFuelLogForm.aircraft')}</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -190,14 +205,16 @@ export function AddFuelLogForm({
                           <RadioGroupItem value="existing" />
                         </FormControl>
                         <FormLabel className="font-normal">
-                          Existing Aircraft
+                          {t('AddFuelLogForm.existingAircraft')}
                         </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-2 space-y-0">
                         <FormControl>
                           <RadioGroupItem value="new" />
                         </FormControl>
-                        <FormLabel className="font-normal">New Aircraft</FormLabel>
+                        <FormLabel className="font-normal">
+                          {t('AddFuelLogForm.newAircraft')}
+                        </FormLabel>
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
@@ -212,14 +229,18 @@ export function AddFuelLogForm({
                 name="planeId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Select Aircraft</FormLabel>
+                    <FormLabel>{t('AddFuelLogForm.selectAircraft')}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select an aircraft" />
+                          <SelectValue
+                            placeholder={t(
+                              'AddFuelLogForm.selectAircraftPlaceholder'
+                            )}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -243,10 +264,14 @@ export function AddFuelLogForm({
                   name="newPlaneId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Aircraft ID</FormLabel>
+                      <FormLabel>
+                        {t('AddFuelLogForm.newAircraftId')}
+                      </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g. N99999"
+                          placeholder={t(
+                            'AddFuelLogForm.newAircraftIdPlaceholder'
+                          )}
                           {...field}
                           value={field.value ?? ''}
                         />
@@ -260,10 +285,14 @@ export function AddFuelLogForm({
                   name="newPlaneName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Aircraft Name</FormLabel>
+                      <FormLabel>
+                        {t('AddFuelLogForm.newAircraftName')}
+                      </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g. Cessna 152"
+                          placeholder={t(
+                            'AddFuelLogForm.newAircraftNamePlaceholder'
+                          )}
                           {...field}
                           value={field.value ?? ''}
                         />
@@ -282,7 +311,7 @@ export function AddFuelLogForm({
             name="startQuantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Start Quantity</FormLabel>
+                <FormLabel>{t('AddFuelLogForm.startQuantity')}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -300,7 +329,7 @@ export function AddFuelLogForm({
             name="liters"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Liters Dispensed</FormLabel>
+                <FormLabel>{t('AddFuelLogForm.litersDispensed')}</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} />
                 </FormControl>
@@ -310,14 +339,14 @@ export function AddFuelLogForm({
           />
         </div>
         <FormItem>
-          <FormLabel>Left Over Quantity</FormLabel>
+          <FormLabel>{t('AddFuelLogForm.leftOverQuantity')}</FormLabel>
           <FormControl>
             <Input type="number" value={leftOverQuantity} readOnly disabled />
           </FormControl>
         </FormItem>
 
         <Button type="submit" className="w-full">
-          Log Fuel
+          {t('AddFuelLogForm.logFuel')}
         </Button>
       </form>
     </Form>

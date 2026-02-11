@@ -23,60 +23,64 @@ import {
 } from '@/components/ui/select';
 import type { FuelLog, Plane } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useI18n } from '@/context/i18n-context';
 
-const formSchema = z
-  .object({
-    date: z.string().min(1, 'A date is required.'),
-    customerType: z.enum(['Company', 'External', 'Refueling']),
-    aircraftSelection: z.enum(['existing', 'new']).default('existing'),
-    planeId: z.string().optional(),
-    newPlaneId: z.string().optional(),
-    newPlaneName: z.string().optional(),
-    startQuantity: z.coerce.number(),
-    liters: z.coerce
-      .number()
-      .min(0.1, { message: 'Liters must be positive.' }),
-    cost: z.coerce.number().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.customerType !== 'Refueling') {
-        return data.startQuantity >= data.liters;
-      }
-      return true;
-    },
-    {
-      message: 'Liters dispensed cannot be more than start quantity.',
-      path: ['liters'],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.customerType === 'Company') {
-        if (data.aircraftSelection === 'existing') {
-          return !!data.planeId;
+const getFormSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      date: z.string().min(1, t('EditFuelLogForm.dateRequired')),
+      customerType: z.enum(['Company', 'External', 'Refueling']),
+      aircraftSelection: z.enum(['existing', 'new']).default('existing'),
+      planeId: z.string().optional(),
+      newPlaneId: z.string().optional(),
+      newPlaneName: z.string().optional(),
+      startQuantity: z.coerce.number(),
+      liters: z.coerce
+        .number()
+        .min(0.1, { message: t('EditFuelLogForm.litersError') }),
+      cost: z.coerce.number().optional(),
+    })
+    .refine(
+      (data) => {
+        if (data.customerType !== 'Refueling') {
+          return data.startQuantity >= data.liters;
         }
-        if (data.aircraftSelection === 'new') {
-          return (
-            data.newPlaneId &&
-            data.newPlaneId.length > 1 &&
-            data.newPlaneName &&
-            data.newPlaneName.length > 1
-          );
-        }
+        return true;
+      },
+      {
+        message: t('EditFuelLogForm.litersDispensedError'),
+        path: ['liters'],
       }
-      return true;
-    },
-    {
-      message: 'Please select an aircraft or provide details for a new one.',
-      path: ['aircraftSelection'],
-    }
-  );
+    )
+    .refine(
+      (data) => {
+        if (data.customerType === 'Company') {
+          if (data.aircraftSelection === 'existing') {
+            return !!data.planeId;
+          }
+          if (data.aircraftSelection === 'new') {
+            return (
+              data.newPlaneId &&
+              data.newPlaneId.length > 1 &&
+              data.newPlaneName &&
+              data.newPlaneName.length > 1
+            );
+          }
+        }
+        return true;
+      },
+      {
+        message: t('EditFuelLogForm.aircraftSelectionError'),
+        path: ['aircraftSelection'],
+      }
+    );
 
 type EditFuelLogFormProps = {
   log: FuelLog;
   planes: Plane[];
-  onSubmit: (values: z.infer<typeof formSchema> & { leftOverQuantity: number }) => void;
+  onSubmit: (
+    values: z.infer<ReturnType<typeof getFormSchema>> & { leftOverQuantity: number }
+  ) => void;
 };
 
 export function EditFuelLogForm({
@@ -84,6 +88,8 @@ export function EditFuelLogForm({
   planes,
   onSubmit,
 }: EditFuelLogFormProps) {
+  const { t } = useI18n();
+  const formSchema = getFormSchema(t);
   const isExistingPlane = planes.some((p) => p.id === log.planeId);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -140,7 +146,7 @@ export function EditFuelLogForm({
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date</FormLabel>
+              <FormLabel>{t('EditFuelLogForm.date')}</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -153,17 +159,25 @@ export function EditFuelLogForm({
           name="customerType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Customer Type</FormLabel>
+              <FormLabel>{t('EditFuelLogForm.customerType')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select customer type" />
+                    <SelectValue
+                      placeholder={t('EditFuelLogForm.selectCustomerType')}
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Company">Company</SelectItem>
-                  <SelectItem value="External">External</SelectItem>
-                  <SelectItem value="Refueling">Refueling</SelectItem>
+                  <SelectItem value="Company">
+                    {t('EditFuelLogForm.company')}
+                  </SelectItem>
+                  <SelectItem value="External">
+                    {t('EditFuelLogForm.external')}
+                  </SelectItem>
+                  <SelectItem value="Refueling">
+                    {t('EditFuelLogForm.refueling')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -177,7 +191,7 @@ export function EditFuelLogForm({
               name="aircraftSelection"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel>Aircraft</FormLabel>
+                  <FormLabel>{t('EditFuelLogForm.aircraft')}</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -189,14 +203,16 @@ export function EditFuelLogForm({
                           <RadioGroupItem value="existing" />
                         </FormControl>
                         <FormLabel className="font-normal">
-                          Existing Aircraft
+                          {t('EditFuelLogForm.existingAircraft')}
                         </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-2 space-y-0">
                         <FormControl>
                           <RadioGroupItem value="new" />
                         </FormControl>
-                        <FormLabel className="font-normal">New Aircraft</FormLabel>
+                        <FormLabel className="font-normal">
+                          {t('EditFuelLogForm.newAircraft')}
+                        </FormLabel>
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
@@ -211,14 +227,18 @@ export function EditFuelLogForm({
                 name="planeId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Select Aircraft</FormLabel>
+                    <FormLabel>{t('EditFuelLogForm.selectAircraft')}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select an aircraft" />
+                          <SelectValue
+                            placeholder={t(
+                              'EditFuelLogForm.selectAircraftPlaceholder'
+                            )}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -242,10 +262,14 @@ export function EditFuelLogForm({
                   name="newPlaneId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Aircraft ID</FormLabel>
+                      <FormLabel>
+                        {t('EditFuelLogForm.newAircraftId')}
+                      </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g. N99999"
+                          placeholder={t(
+                            'EditFuelLogForm.newAircraftIdPlaceholder'
+                          )}
                           {...field}
                           value={field.value ?? ''}
                         />
@@ -259,10 +283,14 @@ export function EditFuelLogForm({
                   name="newPlaneName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Aircraft Name</FormLabel>
+                      <FormLabel>
+                        {t('EditFuelLogForm.newAircraftName')}
+                      </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g. Cessna 152"
+                          placeholder={t(
+                            'EditFuelLogForm.newAircraftNamePlaceholder'
+                          )}
                           {...field}
                           value={field.value ?? ''}
                         />
@@ -281,7 +309,7 @@ export function EditFuelLogForm({
             name="startQuantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Start Quantity</FormLabel>
+                <FormLabel>{t('EditFuelLogForm.startQuantity')}</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} readOnly />
                 </FormControl>
@@ -296,8 +324,8 @@ export function EditFuelLogForm({
               <FormItem>
                 <FormLabel>
                   {customerType === 'Refueling'
-                    ? 'Liters Added'
-                    : 'Liters Dispensed'}
+                    ? t('EditFuelLogForm.litersAdded')
+                    : t('EditFuelLogForm.litersDispensed')}
                 </FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} />
@@ -314,7 +342,7 @@ export function EditFuelLogForm({
             name="cost"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Total Cost</FormLabel>
+                <FormLabel>{t('EditFuelLogForm.totalCost')}</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.01" {...field} />
                 </FormControl>
@@ -325,14 +353,14 @@ export function EditFuelLogForm({
         )}
 
         <FormItem>
-          <FormLabel>Left Over Quantity</FormLabel>
+          <FormLabel>{t('EditFuelLogForm.leftOverQuantity')}</FormLabel>
           <FormControl>
             <Input type="number" value={leftOverQuantity} readOnly disabled />
           </FormControl>
         </FormItem>
 
         <Button type="submit" className="w-full">
-          Save Changes
+          {t('EditFuelLogForm.saveChanges')}
         </Button>
       </form>
     </Form>
