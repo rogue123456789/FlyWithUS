@@ -225,7 +225,7 @@ export default function FlightsPage() {
       }
 
       const newLog = {
-        date: new Date(newLogData.date + 'T00:00:00').toISOString(),
+        date: new Date(`${newLogData.date}T${newLogData.time}`).toISOString(),
         pilotName: newLogData.pilotName,
         planeId: planeId,
         takeoffLocation: newLogData.takeoffLocation,
@@ -272,7 +272,9 @@ export default function FlightsPage() {
 
       const logUpdatePayload = {
         ...updatedLogData,
-        date: new Date(updatedLogData.date + 'T00:00:00').toISOString(),
+        date: new Date(
+          `${updatedLogData.date}T${updatedLogData.time}`
+        ).toISOString(),
         landingFeesPaid: updatedLogData.landingFeesPaid === 'yes',
       };
       batch.update(logRef, logUpdatePayload);
@@ -467,7 +469,7 @@ export default function FlightsPage() {
               {sortedFlightLogs.map((log: FlightLog) => (
                 <TableRow key={log.id}>
                   <TableCell>
-                    {format(parseISO(log.date), 'MMM d, yyyy')}
+                    {format(parseISO(log.date), 'MMM d, yyyy, p')}
                   </TableCell>
                   <TableCell className="font-medium">{log.pilotName}</TableCell>
                   <TableCell>{log.planeId}</TableCell>
@@ -477,8 +479,12 @@ export default function FlightsPage() {
                   <TableCell>{log.flightReason}</TableCell>
                   <TableCell>{log.squawk}</TableCell>
                   <TableCell>
-                    <Badge variant={log.landingFeesPaid ? 'default' : 'secondary'}>
-                      {log.landingFeesPaid ? t('FlightsPage.paid') : t('FlightsPage.notPaid')}
+                    <Badge
+                      variant={log.landingFeesPaid ? 'default' : 'secondary'}
+                    >
+                      {log.landingFeesPaid
+                        ? t('FlightsPage.paid')
+                        : t('FlightsPage.notPaid')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

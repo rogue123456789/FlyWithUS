@@ -35,6 +35,11 @@ const getFormSchema = (t: (key: string) => string) =>
           required_error: t('AddFlightLogForm.dateRequired'),
         })
         .min(1, t('AddFlightLogForm.dateRequired')),
+      time: z
+        .string({
+          required_error: t('AddFlightLogForm.timeRequired'),
+        })
+        .min(1, t('AddFlightLogForm.timeRequired')),
       pilotName: z
         .string()
         .min(2, { message: t('AddFlightLogForm.pilotNameRequired') }),
@@ -91,6 +96,7 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: format(new Date(), 'yyyy-MM-dd'),
+      time: format(new Date(), 'HH:mm'),
       pilotName: '',
       flightDuration: 0.1,
       takeoffLocation: '',
@@ -115,19 +121,34 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
         onSubmit={form.handleSubmit(handleFormSubmit)}
         className="space-y-4"
       >
-        <FormField
-          control={form.control}
-          name="date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('AddFlightLogForm.date')}</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('AddFlightLogForm.date')}</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('AddFlightLogForm.time')}</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           control={form.control}
           name="pilotName"

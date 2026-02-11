@@ -52,6 +52,8 @@ export const translations = {
     AddLogbookEntryForm: {
       date: 'Date',
       dateRequired: 'A date is required.',
+      time: 'Time',
+      timeRequired: 'A time is required.',
       logbook: 'Logbook',
       existingLogbook: 'Existing Logbook',
       newLogbook: 'New Logbook',
@@ -155,6 +157,8 @@ export const translations = {
     AddFlightLogForm: {
       date: 'Date',
       dateRequired: 'A date is required.',
+      time: 'Time',
+      timeRequired: 'A time is required.',
       pilotName: 'Pilot Name',
       pilotNameRequired: 'Pilot name is required.',
       aircraft: 'Aircraft',
@@ -592,7 +596,8 @@ export const translations = {
       addDialogTitle: 'Registrar Entrada en Bitácora',
       addDialogDescription:
         'Completa los detalles para agregar una nueva entrada a la bitácora.',
-      allLogbooksCardDescription: 'Una lista de todas las entradas de bitácora registradas.',
+      allLogbooksCardDescription:
+        'Una lista de todas las entradas de bitácora registradas.',
       tableDate: 'Fecha',
       tableLogbook: 'ID de Bitácora',
       tableFrom: 'Desde',
@@ -610,6 +615,8 @@ export const translations = {
     AddLogbookEntryForm: {
       date: 'Fecha',
       dateRequired: 'La fecha es obligatoria.',
+      time: 'Hora',
+      timeRequired: 'La hora es obligatoria.',
       logbook: 'Bitácora',
       existingLogbook: 'Bitácora Existente',
       newLogbook: 'Bitácora Nueva',
@@ -716,6 +723,8 @@ export const translations = {
     AddFlightLogForm: {
       date: 'Fecha',
       dateRequired: 'La fecha es obligatoria.',
+      time: 'Hora',
+      timeRequired: 'La hora es obligatoria.',
       pilotName: 'Nombre del Piloto',
       pilotNameRequired: 'El nombre del piloto es obligatorio.',
       aircraft: 'Aeronave',
@@ -808,7 +817,8 @@ export const translations = {
         'El usuario {email} ahora es un(a) {newRole}.',
       toastErrorTitle: 'Error al actualizar el rol',
       toastDeletedTitle: 'Usuario Eliminado',
-      toastDeletedDescription: 'Se ha revocado el acceso para el usuario {email}.',
+      toastDeletedDescription:
+        'Se ha revocado el acceso para el usuario {email}.',
     },
     AircraftManagement: {
       id: 'ID',
@@ -1065,7 +1075,8 @@ export const translations = {
       toastUpdatedTitle: 'Pago Actualizado',
       toastUpdatedDescription: 'El registro de pago ha sido actualizado.',
       toastDeletedTitle: 'Pago Eliminado',
-      toastDeletedDescription: 'El registro de pago {paymentId} ha sido eliminado.',
+      toastDeletedDescription:
+        'El registro de pago {paymentId} ha sido eliminado.',
       toastNoLogs: 'No hay pagos para borrar.',
       toastClearingTitle: 'Borrando Pagos...',
       toastClearedTitle: 'Todos los Pagos Borrados',

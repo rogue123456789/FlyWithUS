@@ -147,7 +147,9 @@ export default function LogbookPage() {
       }
 
       const newEntry = {
-        date: new Date(newEntryData.date + 'T00:00:00').toISOString(),
+        date: new Date(
+          `${newEntryData.date}T${newEntryData.time}`
+        ).toISOString(),
         logbookId: logbookId,
         startLocation: newEntryData.startLocation,
         endLocation: newEntryData.endLocation,
@@ -225,7 +227,7 @@ export default function LogbookPage() {
               {sortedLogbookEntries.map((log: LogbookEntry) => (
                 <TableRow key={log.id}>
                   <TableCell>
-                    {format(parseISO(log.date), 'MMM d, yyyy')}
+                    {format(parseISO(log.date), 'MMM d, yyyy, p')}
                   </TableCell>
                   <TableCell>{getLogbookName(log.logbookId)}</TableCell>
                   <TableCell>{log.startLocation}</TableCell>

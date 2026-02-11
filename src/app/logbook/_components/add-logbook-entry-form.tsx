@@ -33,6 +33,9 @@ const getFormSchema = (t: (key: string) => string) =>
       date: z
         .string({ required_error: t('AddLogbookEntryForm.dateRequired') })
         .min(1, t('AddLogbookEntryForm.dateRequired')),
+      time: z
+        .string({ required_error: t('AddLogbookEntryForm.timeRequired') })
+        .min(1, t('AddLogbookEntryForm.timeRequired')),
       logbookSelection: z.enum(['existing', 'new']).default('existing'),
       logbookId: z.string().optional(),
       newLogbookName: z.string().optional(),
@@ -90,6 +93,7 @@ export function AddLogbookEntryForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: format(new Date(), 'yyyy-MM-dd'),
+      time: format(new Date(), 'HH:mm'),
       duration: 0.1,
       startLocation: '',
       endLocation: '',
@@ -114,19 +118,34 @@ export function AddLogbookEntryForm({
         onSubmit={form.handleSubmit(handleFormSubmit)}
         className="space-y-4"
       >
-        <FormField
-          control={form.control}
-          name="date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('AddLogbookEntryForm.date')}</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('AddLogbookEntryForm.date')}</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('AddLogbookEntryForm.time')}</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
