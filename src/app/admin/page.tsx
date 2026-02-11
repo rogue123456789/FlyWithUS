@@ -21,15 +21,20 @@ import { useI18n } from '@/context/i18n-context';
 import type { Plane, Employee } from '@/lib/types';
 import { AircraftManagement } from './_components/aircraft-management';
 import { EmployeeManagement } from './_components/employee-management';
+import { useAuthReady } from '@/context/auth-ready-context';
 
 export default function AdminPage() {
   const firestore = useFirestore();
   const { t } = useI18n();
   const { user } = useUser();
+  const isAuthReady = useAuthReady();
 
   const adminUsersCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'roles_admin') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'roles_admin')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const {
     data: adminUsers,
@@ -38,8 +43,11 @@ export default function AdminPage() {
   } = useCollection(adminUsersCollection);
 
   const openUsersCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'roles_open') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'roles_open')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const {
     data: openUsers,
@@ -48,15 +56,21 @@ export default function AdminPage() {
   } = useCollection(openUsersCollection);
 
   const planesCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'aircrafts') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'aircrafts')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: planes, isLoading: planesLoading } =
     useCollection<Plane>(planesCollection);
 
   const employeesCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'employees') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'employees')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: employees, isLoading: employeesLoading } =
     useCollection<Employee>(employeesCollection);
@@ -82,7 +96,11 @@ export default function AdminPage() {
   }, [adminUsers, openUsers]);
 
   const isLoading =
-    isAdminLoading || isOpenLoading || planesLoading || employeesLoading;
+    !isAuthReady ||
+    isAdminLoading ||
+    isOpenLoading ||
+    planesLoading ||
+    employeesLoading;
   const error = adminError || openError;
 
   return (

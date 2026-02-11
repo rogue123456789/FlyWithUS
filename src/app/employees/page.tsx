@@ -41,6 +41,7 @@ import {
   updateDoc,
   addDoc,
   deleteDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import {
   Select,
@@ -82,6 +83,7 @@ import {
 import { downloadCsv } from '@/lib/utils';
 import { EditWorkLogForm } from './_components/edit-work-log-form';
 import { useI18n } from '@/context/i18n-context';
+import { useAuthReady } from '@/context/auth-ready-context';
 
 function formatDuration(ms: number) {
   if (ms < 0) ms = 0;
@@ -116,16 +118,23 @@ function LiveTimer({ startTime }: { startTime: string }) {
 export default function EmployeesPage() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const isAuthReady = useAuthReady();
 
   const employeesCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'employees') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'employees')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: employees } = useCollection<Employee>(employeesCollection);
 
   const workLogsCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'work_logs') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'work_logs')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: workLogs } = useCollection<WorkLog>(workLogsCollection);
 
@@ -144,14 +153,15 @@ export default function EmployeesPage() {
   const { t } = useI18n();
 
   const adminRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user ? doc(firestore, 'roles_admin', user.uid) : null,
+    [isAuthReady, firestore, user]
   );
   const { data: adminRoleDoc } = useDoc(adminRef);
 
   const openRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
-    [firestore, user]
+    () => (isAuthReady && user ? doc(firestore, 'roles_open', user.uid) : null),
+    [isAuthReady, firestore, user]
   );
   const { data: openRoleDoc } = useDoc(openRef);
 
@@ -240,24 +250,9 @@ export default function EmployeesPage() {
     if (!sortedWorkLogs) return;
     const dataToExport = sortedWorkLogs.map((log) => ({
       'Employee Name': log.employeeName,
-      Date: new Date(log.date).toLocaleDateString('en-US', {
-        timeZone: 'America/Costa_Rica',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }),
-      'Clock In': new Date(log.clockInTime).toLocaleTimeString('en-US', {
-        timeZone: 'America/Costa_Rica',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      }),
-      'Clock Out': new Date(log.clockOutTime).toLocaleTimeString('en-US', {
-        timeZone: 'America/Costa_Rica',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      }),
+      Date: format(parseISO(log.date), 'yyyy-MM-dd'),
+      'Clock In': format(parseISO(log.clockInTime), 'HH:mm:ss'),
+      'Clock Out': format(parseISO(log.clockOutTime), 'HH:mm:ss'),
       'Duration (Hours)': (log.duration / 3600000).toFixed(2),
     }));
     downloadCsv(
@@ -334,10 +329,13 @@ export default function EmployeesPage() {
     toast({ title: t('EmployeesPage.toastClearingTitle') });
 
     try {
-      const deletePromises = workLogs.map((log) =>
-        deleteDoc(doc(firestore, 'work_logs', log.id))
-      );
-      await Promise.all(deletePromises);
+      const batch = writeBatch(firestore);
+      workLogs.forEach((log) => {
+        const logRef = doc(firestore, 'work_logs', log.id);
+        batch.delete(logRef);
+      });
+      await batch.commit();
+
       toast({ title: t('EmployeesPage.toastClearedTitle') });
     } catch (error: any) {
       toast({
@@ -403,14 +401,7 @@ export default function EmployeesPage() {
                 <p>
                   {t('EmployeesPage.clockedInAt')}{' '}
                   {selectedEmployee.lastClockIn &&
-                    new Date(selectedEmployee.lastClockIn).toLocaleTimeString(
-                      'en-US',
-                      {
-                        timeZone: 'America/Costa_Rica',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }
-                    )}
+                    format(parseISO(selectedEmployee.lastClockIn), 'p')}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {t('EmployeesPage.sessionDuration')}{' '}
@@ -480,27 +471,10 @@ export default function EmployeesPage() {
                   <TableCell className="font-medium">
                     {log.employeeName}
                   </TableCell>
+                  <TableCell>{format(parseISO(log.date), 'PP')}</TableCell>
+                  <TableCell>{format(parseISO(log.clockInTime), 'p')}</TableCell>
                   <TableCell>
-                    {new Date(log.date).toLocaleDateString('en-US', {
-                      timeZone: 'America/Costa_Rica',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(log.clockInTime).toLocaleTimeString('en-US', {
-                      timeZone: 'America/Costa_Rica',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(log.clockOutTime).toLocaleTimeString('en-US', {
-                      timeZone: 'America/Costa_Rica',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {format(parseISO(log.clockOutTime), 'p')}
                   </TableCell>
                   <TableCell>{formatDuration(log.duration)}</TableCell>
                   <TableCell className="text-right">

@@ -20,26 +20,29 @@ import { Badge } from '@/components/ui/badge';
 import { UpdatePasswordForm } from './_components/update-password-form';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/context/i18n-context';
+import { useAuthReady } from '@/context/auth-ready-context';
 
 export default function ProfilePage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const { t } = useI18n();
+  const isAuthReady = useAuthReady();
 
   const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(
     null
   );
 
   const adminRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user ? doc(firestore, 'roles_admin', user.uid) : null,
+    [isAuthReady, firestore, user]
   );
   const { data: adminRoleDoc } = useDoc(adminRef);
 
   const openRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
-    [firestore, user]
+    () => (isAuthReady && user ? doc(firestore, 'roles_open', user.uid) : null),
+    [isAuthReady, firestore, user]
   );
   const { data: openRoleDoc } = useDoc(openRef);
 

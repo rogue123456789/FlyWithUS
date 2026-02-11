@@ -26,36 +26,50 @@ import {
 } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { FlightLog, FuelLog, Employee, Plane } from '@/lib/types';
+import { useAuthReady } from '@/context/auth-ready-context';
 
 export default function DashboardPage() {
   const { t } = useI18n();
   const firestore = useFirestore();
   const { user } = useUser();
+  const isAuthReady = useAuthReady();
 
   const flightLogsCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'flight_logs') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'flight_logs')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: flightLogs, isLoading: flightLogsLoading } =
     useCollection<FlightLog>(flightLogsCollection);
 
   const fuelLogsCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'fuel_records') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'fuel_records')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: fuelLogs, isLoading: fuelLogsLoading } =
     useCollection<FuelLog>(fuelLogsCollection);
 
   const employeesCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'employees') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'employees')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: employees, isLoading: employeesLoading } =
     useCollection<Employee>(employeesCollection);
 
   const planesCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'aircrafts') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'aircrafts')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: planes, isLoading: planesLoading } =
     useCollection<Plane>(planesCollection);
@@ -79,6 +93,7 @@ export default function DashboardPage() {
   );
 
   const isLoading =
+    !isAuthReady ||
     flightLogsLoading ||
     fuelLogsLoading ||
     employeesLoading ||

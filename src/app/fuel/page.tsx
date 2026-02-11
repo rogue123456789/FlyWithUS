@@ -72,8 +72,10 @@ import {
   updateDoc,
   setDoc,
   deleteDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
+import { useAuthReady } from '@/context/auth-ready-context';
 
 const AddFuelLogDialog = ({
   onAddFuelLog,
@@ -191,16 +193,23 @@ const EditFuelLogDialog = ({
 export default function FuelPage() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const isAuthReady = useAuthReady();
 
   const fuelLogsCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'fuel_records') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'fuel_records')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: fuelLogs } = useCollection<FuelLog>(fuelLogsCollection);
 
   const planesCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'aircrafts') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'aircrafts')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: planes } = useCollection<Plane>(planesCollection);
 
@@ -213,14 +222,15 @@ export default function FuelPage() {
   const { t } = useI18n();
 
   const adminRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user ? doc(firestore, 'roles_admin', user.uid) : null,
+    [isAuthReady, firestore, user]
   );
   const { data: adminRoleDoc } = useDoc(adminRef);
 
   const openRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
-    [firestore, user]
+    () => (isAuthReady && user ? doc(firestore, 'roles_open', user.uid) : null),
+    [isAuthReady, firestore, user]
   );
   const { data: openRoleDoc } = useDoc(openRef);
 
@@ -345,10 +355,12 @@ export default function FuelPage() {
     toast({ title: t('FuelPage.toastClearingTitle') });
 
     try {
-      const deletePromises = fuelLogs.map((log) =>
-        deleteDoc(doc(firestore, 'fuel_records', log.id))
-      );
-      await Promise.all(deletePromises);
+      const batch = writeBatch(firestore);
+      fuelLogs.forEach((log) => {
+        const logRef = doc(firestore, 'fuel_records', log.id);
+        batch.delete(logRef);
+      });
+      await batch.commit();
       toast({ title: t('FuelPage.toastClearedTitle') });
     } catch (error: any) {
       toast({

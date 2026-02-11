@@ -70,8 +70,10 @@ import {
   setDoc,
   increment,
   deleteDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
+import { useAuthReady } from '@/context/auth-ready-context';
 
 const AddFlightLogDialog = ({
   onAddFlightLog,
@@ -150,16 +152,23 @@ export default function FlightsPage() {
   const { t } = useI18n();
   const firestore = useFirestore();
   const { user } = useUser();
+  const isAuthReady = useAuthReady();
 
   const flightLogsCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'flight_logs') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'flight_logs')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: flightLogs } = useCollection<FlightLog>(flightLogsCollection);
 
   const planesCollection = useMemoFirebase(
-    () => (user && firestore ? collection(firestore, 'aircrafts') : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user && firestore
+        ? collection(firestore, 'aircrafts')
+        : null,
+    [isAuthReady, firestore, user]
   );
   const { data: planes } = useCollection<Plane>(planesCollection);
 
@@ -171,14 +180,15 @@ export default function FlightsPage() {
   );
 
   const adminRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
-    [firestore, user]
+    () =>
+      isAuthReady && user ? doc(firestore, 'roles_admin', user.uid) : null,
+    [isAuthReady, firestore, user]
   );
   const { data: adminRoleDoc } = useDoc(adminRef);
 
   const openRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'roles_open', user.uid) : null),
-    [firestore, user]
+    () => (isAuthReady && user ? doc(firestore, 'roles_open', user.uid) : null),
+    [isAuthReady, firestore, user]
   );
   const { data: openRoleDoc } = useDoc(openRef);
 
@@ -301,6 +311,8 @@ export default function FlightsPage() {
     toast({ title: t('FlightsPage.toastClearingTitle') });
 
     try {
+      const batch = writeBatch(firestore);
+
       const updates: { [planeId: string]: number } = {};
       flightLogs.forEach((log) => {
         if (updates[log.planeId]) {
@@ -308,20 +320,18 @@ export default function FlightsPage() {
         } else {
           updates[log.planeId] = -log.flightDuration;
         }
+        const logRef = doc(firestore, 'flight_logs', log.id);
+        batch.delete(logRef);
       });
 
-      const updatePromises = Object.keys(updates).map((planeId) => {
+      Object.keys(updates).forEach((planeId) => {
         const planeRef = doc(firestore, 'aircrafts', planeId);
-        return updateDoc(planeRef, {
+        batch.update(planeRef, {
           totalHours: increment(updates[planeId]),
         });
       });
 
-      const deletePromises = flightLogs.map((log) =>
-        deleteDoc(doc(firestore, 'flight_logs', log.id))
-      );
-
-      await Promise.all([...updatePromises, ...deletePromises]);
+      await batch.commit();
 
       toast({ title: t('FlightsPage.toastClearedTitle') });
     } catch (error: any) {

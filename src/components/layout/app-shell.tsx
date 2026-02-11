@@ -46,6 +46,7 @@ import {
 import { doc } from 'firebase/firestore';
 import { Button } from '../ui/button';
 import { useI18n } from '@/context/i18n-context';
+import { AuthReadyProvider } from '@/context/auth-ready-context';
 
 const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   const { user } = useUser();
@@ -65,7 +66,9 @@ const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
           <UserIcon className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="flex flex-col overflow-hidden">
-          <span className="truncate font-medium">{user?.email ?? 'Guest'}</span>
+          <span className="truncate font-medium">
+            {user?.isAnonymous ? 'Guest' : user?.email ?? 'User'}
+          </span>
           <span className="truncate text-xs text-sidebar-foreground/80">
             {t('AppShell.authenticated')}
           </span>
@@ -297,10 +300,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [user, isUserLoading, isRoleLoading, userRole, pathname, router, auth]);
 
   const isLoading = isUserLoading || isRoleLoading;
-  const showLoadingSpinner =
-    isLoading && pathname !== '/login' && pathname !== '/signup';
+  const isAuthReady = !isLoading;
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
 
-  if (showLoadingSpinner) {
+  if (isLoading && !isAuthPage) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -308,7 +311,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
   if (isAuthPage) {
     return <>{children}</>;
   }
@@ -332,7 +334,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <SidebarTrigger />
         </header>
-        {children}
+        <AuthReadyProvider isReady={isAuthReady}>{children}</AuthReadyProvider>
       </SidebarInset>
     </SidebarProvider>
   );
