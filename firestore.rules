@@ -85,12 +85,12 @@ service cloud.firestore {
 
     /**
      * @description Stores information about aircraft. Readable by all.
-     * Admins can create/delete. Admins and Open Users can update (for flight hours).
+     * Admins can create/delete. Admins and Open Users can create/update (for flight hours).
      */
     match /aircrafts/{aircraftId} {
       allow get, list: if isAdmin() || isOpenUser();
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || isOpenUser();
+      allow create, update: if isAdmin() || isOpenUser();
+      allow delete: if isAdmin();
     }
 
     /**
