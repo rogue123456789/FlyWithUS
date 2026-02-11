@@ -516,7 +516,7 @@ export default function FuelPage() {
             <TableBody>
               {sortedFuelLogs.map((log: FuelLog) => (
                 <TableRow key={log.id}>
-                  <TableCell>
+                  <TableCell suppressHydrationWarning>
                     {format(parseISO(log.date as string), 'MMM d, yyyy')}
                   </TableCell>
                   <TableCell>

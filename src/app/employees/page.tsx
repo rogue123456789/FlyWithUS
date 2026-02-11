@@ -399,7 +399,7 @@ export default function EmployeesPage() {
           {selectedEmployee && selectedEmployee.status === 'Clocked In' ? (
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
-                <p>
+                <p suppressHydrationWarning>
                   {t('EmployeesPage.clockedInAt')}{' '}
                   {selectedEmployee.lastClockIn &&
                     format(parseISO(selectedEmployee.lastClockIn), 'p')}
@@ -475,11 +475,13 @@ export default function EmployeesPage() {
                   <TableCell className="font-medium">
                     {log.employeeName}
                   </TableCell>
-                  <TableCell>{format(parseISO(log.date), 'PP')}</TableCell>
-                  <TableCell>
+                  <TableCell suppressHydrationWarning>
+                    {format(parseISO(log.date), 'PP')}
+                  </TableCell>
+                  <TableCell suppressHydrationWarning>
                     {format(parseISO(log.clockInTime), 'p')}
                   </TableCell>
-                  <TableCell>
+                  <TableCell suppressHydrationWarning>
                     {format(parseISO(log.clockOutTime), 'p')}
                   </TableCell>
                   <TableCell>{formatDuration(log.duration)}</TableCell>

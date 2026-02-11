@@ -61,7 +61,7 @@ export function RecentLogs({ flightLogs, fuelLogs }: RecentLogsProps) {
                     liters: log.liters,
                   })}
             </TableCell>
-            <TableCell className="text-right">
+            <TableCell className="text-right" suppressHydrationWarning>
               {format(parseISO(log.date), 'MMM d, yyyy')}
             </TableCell>
           </TableRow>

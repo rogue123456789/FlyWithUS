@@ -341,7 +341,7 @@ export default function LogbookPage() {
             <TableBody>
               {sortedLogbookEntries.map((log: LogbookEntry) => (
                 <TableRow key={log.id}>
-                  <TableCell>
+                  <TableCell suppressHydrationWarning>
                     {format(parseISO(log.date), 'MMM d, yyyy, p')}
                   </TableCell>
                   <TableCell>{getLogbookName(log.logbookId)}</TableCell>

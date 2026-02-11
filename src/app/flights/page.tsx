@@ -465,7 +465,7 @@ export default function FlightsPage() {
             <TableBody>
               {sortedFlightLogs.map((log: FlightLog) => (
                 <TableRow key={log.id}>
-                  <TableCell>
+                  <TableCell suppressHydrationWarning>
                     {format(parseISO(log.date), 'MMM d, yyyy, p')}
                   </TableCell>
                   <TableCell className="font-medium">{log.pilotName}</TableCell>

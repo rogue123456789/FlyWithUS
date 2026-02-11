@@ -270,7 +270,7 @@ export default function PaymentsPage() {
             <TableBody>
               {sortedPayments.map((payment) => (
                 <TableRow key={payment.id}>
-                  <TableCell>
+                  <TableCell suppressHydrationWarning>
                     {format(parseISO(payment.date), 'MMM d, yyyy')}
                   </TableCell>
                   <TableCell>
