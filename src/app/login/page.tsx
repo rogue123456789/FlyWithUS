@@ -37,7 +37,26 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Ensure the user has an 'open' role. This is crucial for returning users
+      // and prevents permission errors if role creation failed during signup.
+      // Using { merge: true } prevents overwriting existing roles.
+      const userOpenRoleRef = doc(firestore, 'roles_open', user.uid);
+      await setDoc(
+        userOpenRoleRef,
+        {
+          email: user.email,
+          username: user.email || 'User',
+        },
+        { merge: true }
+      );
+
       router.push('/');
     } catch (error: any) {
       toast({

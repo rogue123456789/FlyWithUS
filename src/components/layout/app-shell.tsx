@@ -221,23 +221,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
   React.useEffect(() => {
-    const combinedLoading = isUserLoading || (user ? (isAdminLoading || isOpenLoading) : false);
-
-    if (combinedLoading) {
+    // This effect manages the overall loading state, waiting for both authentication and role data.
+    if (isUserLoading) {
+      // If Firebase Auth is still determining the user, we are definitely loading.
       setIsRoleLoading(true);
       return;
     }
 
+    if (!user) {
+      // If there is no user, we are not loading roles. It's safe to render login/signup pages.
+      setUserRole(null);
+      setIsRoleLoading(false);
+      return;
+    }
+
+    // If we have a user, we now need to wait for the role documents to be checked.
+    const rolesAreLoading = isAdminLoading || isOpenLoading;
+    if (rolesAreLoading) {
+      setIsRoleLoading(true);
+      return;
+    }
+
+    // At this point, role checks are complete.
     if (adminRoleDoc) {
       setUserRole('admin');
+      setIsRoleLoading(false); // Role found, loading complete.
     } else if (openRoleDoc) {
       setUserRole('open');
+      setIsRoleLoading(false); // Role found, loading complete.
     } else {
+      // This is the key state: user is loaded, role checks are done, but no role doc was found.
+      // This can happen due to replication lag right after login/signup.
+      // We MUST remain in a loading state until a role appears. The useDoc hooks will
+      // trigger a re-render when the doc is found.
       setUserRole(null);
+      setIsRoleLoading(true);
     }
-    setIsRoleLoading(false);
-
-  }, [isUserLoading, isAdminLoading, isOpenLoading, adminRoleDoc, openRoleDoc, user]);
+  }, [user, isUserLoading, adminRoleDoc, openRoleDoc, isAdminLoading, isOpenLoading]);
 
 
   React.useEffect(() => {
@@ -252,11 +272,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, isRoleLoading, pathname, router]);
 
-  if (
-    (isUserLoading || isRoleLoading) &&
-    pathname !== '/login' &&
-    pathname !== '/signup'
-  ) {
+  const showLoadingSpinner = (isUserLoading || isRoleLoading) && pathname !== '/login' && pathname !== '/signup';
+
+  if (showLoadingSpinner) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
