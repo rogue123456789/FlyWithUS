@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   SidebarProvider,
@@ -17,7 +16,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   LayoutDashboard,
   Plane,
@@ -38,9 +36,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { Button } from '../ui/button';
 
 const allNavItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['admin', 'open'] },
@@ -53,7 +51,6 @@ const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
-  const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -63,10 +60,9 @@ const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2">
-        <Avatar className="h-8 w-8">
-          {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt={user?.email || 'User'} data-ai-hint={userAvatar.imageHint} />}
-          <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
-        </Avatar>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+            <UserIcon className="h-5 w-5 text-muted-foreground" />
+        </div>
         <div className="flex flex-col overflow-hidden">
           <span className="truncate font-medium">{user?.email}</span>
           <span className="truncate text-xs text-sidebar-foreground/80">
@@ -103,10 +99,8 @@ const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
 };
 
 const CollapsedUserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
-  const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
-  const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
   
   const handleLogout = async () => {
     await auth.signOut();
@@ -115,11 +109,10 @@ const CollapsedUserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) 
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Avatar className="h-8 w-8">
-          {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt={user?.email || 'User'} data-ai-hint={userAvatar.imageHint} />}
-          <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
-        </Avatar>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+            <UserIcon className="h-5 w-5" />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -219,14 +212,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       setUserRole('admin');
     } else if (openRoleDoc) {
       setUserRole('open');
+    } else if (user) {
+      // If a user is logged in but has no role doc, default them to 'open'
+      setUserRole('open');
     } else {
-      setUserRole(null); 
+      setUserRole(null);
     }
     setIsRoleLoading(false);
   }, [isUserLoading, isAdminLoading, isOpenLoading, adminRoleDoc, openRoleDoc, user]);
 
   React.useEffect(() => {
-    if (isRoleLoading) return;
+    if (isUserLoading || isRoleLoading) return;
 
     const isAuthPage = pathname === '/login' || pathname === '/signup';
 
@@ -235,9 +231,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } else if (user && isAuthPage) {
       router.replace('/');
     }
-  }, [user, isRoleLoading, pathname, router]);
+  }, [user, isUserLoading, isRoleLoading, pathname, router]);
 
-  if (isRoleLoading && pathname !== '/login' && pathname !== '/signup') {
+  if ((isUserLoading || isRoleLoading) && pathname !== '/login' && pathname !== '/signup') {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />

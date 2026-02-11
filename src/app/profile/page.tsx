@@ -10,15 +10,15 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { doc, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { Badge } from '@/components/ui/badge';
+import { UpdatePasswordForm } from './_components/update-password-form';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
+  const { toast } = useToast();
 
   const [userRole, setUserRole] = React.useState<'admin' | 'open' | null>(null);
 
@@ -38,29 +38,68 @@ export default function ProfilePage() {
     }
   }, [adminRoleDoc, openRoleDoc]);
 
+  const handleUpdatePassword = async (values: { currentPassword: string; newPassword: string }) => {
+    if (!user || !user.email) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not find user information.' });
+        throw new Error('Missing user info');
+    }
+
+    try {
+        const credential = EmailAuthProvider.credential(user.email, values.currentPassword);
+        // Re-authenticate the user to confirm their identity
+        await reauthenticateWithCredential(user, credential);
+        // If re-authentication is successful, update the password
+        await updatePassword(user, values.newPassword);
+        toast({ title: 'Success', description: 'Your password has been updated.' });
+    } catch (error: any) {
+        let description = 'An unexpected error occurred.';
+        if (error.code === 'auth/wrong-password') {
+            description = 'The current password you entered is incorrect.';
+        } else if (error.code === 'auth/requires-recent-login') {
+            description = 'For your security, please sign in again to change your password.';
+        }
+        toast({ variant: 'destructive', title: 'Password update failed', description });
+        throw error; // Re-throw to be caught by the form handler
+    }
+  };
+
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Profile" />
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Profile</CardTitle>
-          <CardDescription>
-            This is your user profile information.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                  {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt={user?.email || 'User'} data-ai-hint={userAvatar.imageHint} />}
-                  <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <p className="text-xl font-semibold">{user?.email}</p>
-                    {userRole && <Badge variant={userRole === 'admin' ? 'default' : 'secondary'}>{userRole}</Badge>}
-                </div>
-            </div>
-        </CardContent>
-      </Card>
+      <div className="grid gap-8 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Profile</CardTitle>
+            <CardDescription>
+              This is your user profile information.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+              <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p className="text-lg">{user?.email}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Role</p>
+                {userRole && <Badge variant={userRole === 'admin' ? 'default' : 'secondary'}>{userRole}</Badge>}
+                {!userRole && <p className="text-sm text-muted-foreground">No role assigned.</p>}
+              </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription>
+                    Update your account password here.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <UpdatePasswordForm onSubmit={handleUpdatePassword} />
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
