@@ -46,10 +46,9 @@ const allNavItems = [
   { href: '/flights', label: 'Flights', icon: Plane, role: ['admin', 'open'] },
   { href: '/fuel', label: 'Fuel', icon: Fuel, role: ['admin', 'open'] },
   { href: '/employees', label: 'Employees', icon: Users, role: ['admin'] },
-  { href: '/admin', label: 'Admin', icon: Settings, role: ['admin'] },
 ];
 
-const UserMenu = () => {
+const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
@@ -78,6 +77,12 @@ const UserMenu = () => {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {userRole === 'admin' && (
+          <DropdownMenuItem onSelect={() => router.push('/admin')}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Admin</span>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem>Profile</DropdownMenuItem>
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -90,7 +95,7 @@ const UserMenu = () => {
   );
 };
 
-const CollapsedUserMenu = () => {
+const CollapsedUserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
@@ -112,6 +117,12 @@ const CollapsedUserMenu = () => {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {userRole === 'admin' && (
+          <DropdownMenuItem onSelect={() => router.push('/admin')}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Admin</span>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem>Profile</DropdownMenuItem>
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -162,7 +173,7 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        {state === 'expanded' ? <UserMenu /> : <CollapsedUserMenu />}
+        {state === 'expanded' ? <UserMenu userRole={userRole} /> : <CollapsedUserMenu userRole={userRole} />}
       </SidebarFooter>
     </Sidebar>
   );
@@ -185,16 +196,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const loading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
-    setIsRoleLoading(loading);
-
+    
     if (!loading) {
       if (adminRoleDoc) {
         setUserRole('admin');
       } else if (openRoleDoc) {
         setUserRole('open');
       } else {
-        setUserRole(null);
+        setUserRole(null); 
       }
+      setIsRoleLoading(false);
     }
   }, [isUserLoading, isAdminLoading, isOpenLoading, adminRoleDoc, openRoleDoc, user]);
 
