@@ -371,6 +371,7 @@ export default function FuelPage() {
 
       await recalculateAndCommit(fuelLogs ?? [], { type: 'add', data });
       toast({ title: t('AddFuelLogForm.toastLoggedTitle') });
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -391,6 +392,7 @@ export default function FuelPage() {
     };
     await recalculateAndCommit(fuelLogs ?? [], { type: 'add', data });
     toast({ title: t('AddRefuelLogForm.toastLoggedTitle') });
+    window.location.reload();
   };
 
   const handleUpdateFuelLog = async (updatedLogData: any) => {

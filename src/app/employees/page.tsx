@@ -194,6 +194,7 @@ export default function EmployeesPage() {
           }),
         });
       }
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -237,6 +238,7 @@ export default function EmployeesPage() {
           duration: formatDuration(duration),
         }),
       });
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',

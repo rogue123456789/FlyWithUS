@@ -132,6 +132,7 @@ export default function PaymentsPage() {
         description: t('PaymentsPage.toastAddedDescription'),
       });
       setIsAddDialogOpen(false);
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',

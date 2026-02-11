@@ -243,6 +243,7 @@ export default function FlightsPage() {
           pilotName: newLogData.pilotName,
         }),
       });
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
