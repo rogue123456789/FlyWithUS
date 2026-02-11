@@ -55,6 +55,7 @@ const getFormSchema = (t: (key: string) => string) =>
       flightReason: z
         .string()
         .min(2, { message: t('AddFlightLogForm.flightReasonRequired') }),
+      landingFeesPaid: z.enum(['yes', 'no']).default('no'),
     })
     .refine(
       (data) => {
@@ -97,6 +98,7 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
       flightReason: '',
       aircraftSelection: 'existing',
       squawk: 7000,
+      landingFeesPaid: 'no',
     },
   });
 
@@ -342,6 +344,40 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
                   )}
                   {...field}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="landingFeesPaid"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <FormLabel>{t('AddFlightLogForm.landingFeesPaid')}</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex space-x-4"
+                >
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="yes" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      {t('AddFlightLogForm.yes')}
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="no" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      {t('AddFlightLogForm.no')}
+                    </FormLabel>
+                  </FormItem>
+                </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>

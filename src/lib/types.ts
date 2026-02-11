@@ -25,6 +25,7 @@ export interface FlightLog {
   flightReason: string;
   date: string;
   squawk?: number;
+  landingFeesPaid?: boolean;
 }
 
 export interface FuelLog {

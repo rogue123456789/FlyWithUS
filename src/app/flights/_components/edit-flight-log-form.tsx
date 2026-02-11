@@ -24,6 +24,7 @@ import type { Plane, FlightLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useI18n } from '@/context/i18n-context';
 import { format, parseISO } from 'date-fns';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const getFormSchema = (t: (key: string) => string) =>
   z.object({
@@ -49,6 +50,7 @@ const getFormSchema = (t: (key: string) => string) =>
     flightReason: z
       .string()
       .min(2, { message: t('AddFlightLogForm.flightReasonRequired') }),
+    landingFeesPaid: z.enum(['yes', 'no']).default('no'),
   });
 
 type EditFlightLogFormProps = {
@@ -76,10 +78,11 @@ export function EditFlightLogForm({
       flightDuration: log.flightDuration,
       flightReason: log.flightReason,
       squawk: log.squawk,
+      landingFeesPaid: log.landingFeesPaid ? 'yes' : 'no',
     },
   });
 
-  function handleFormSubmit(values: z.infer<typeof formSchema>) {
+  function handleFormSubmit(values: z.infer<ReturnType<typeof getFormSchema>>) {
     onSubmit(values);
     form.reset();
   }
@@ -236,6 +239,40 @@ export function EditFlightLogForm({
                   )}
                   {...field}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="landingFeesPaid"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <FormLabel>{t('AddFlightLogForm.landingFeesPaid')}</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex space-x-4"
+                >
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="yes" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      {t('AddFlightLogForm.yes')}
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="no" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      {t('AddFlightLogForm.no')}
+                    </FormLabel>
+                  </FormItem>
+                </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>

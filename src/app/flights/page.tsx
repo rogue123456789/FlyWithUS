@@ -74,6 +74,7 @@ import {
 } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 import { useAuthReady } from '@/context/auth-ready-context';
+import { Badge } from '@/components/ui/badge';
 
 const AddFlightLogDialog = ({
   onAddFlightLog,
@@ -232,6 +233,7 @@ export default function FlightsPage() {
         flightDuration: newLogData.flightDuration,
         flightReason: newLogData.flightReason,
         squawk: newLogData.squawk,
+        landingFeesPaid: newLogData.landingFeesPaid === 'yes',
       };
       await addDoc(collection(firestore, 'flight_logs'), newLog);
 
@@ -271,6 +273,7 @@ export default function FlightsPage() {
       const logUpdatePayload = {
         ...updatedLogData,
         date: new Date(updatedLogData.date + 'T00:00:00').toISOString(),
+        landingFeesPaid: updatedLogData.landingFeesPaid === 'yes',
       };
       batch.update(logRef, logUpdatePayload);
 
@@ -454,6 +457,7 @@ export default function FlightsPage() {
                 <TableHead>{t('FlightsPage.tableDuration')}</TableHead>
                 <TableHead>{t('FlightsPage.tableReason')}</TableHead>
                 <TableHead>{t('FlightsPage.tableSquawk')}</TableHead>
+                <TableHead>{t('FlightsPage.tableLandingFees')}</TableHead>
                 <TableHead className="text-right">
                   {t('FlightsPage.tableActions')}
                 </TableHead>
@@ -472,6 +476,11 @@ export default function FlightsPage() {
                   <TableCell>{log.flightDuration.toFixed(1)}h</TableCell>
                   <TableCell>{log.flightReason}</TableCell>
                   <TableCell>{log.squawk}</TableCell>
+                  <TableCell>
+                    <Badge variant={log.landingFeesPaid ? 'default' : 'secondary'}>
+                      {log.landingFeesPaid ? t('FlightsPage.paid') : t('FlightsPage.notPaid')}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

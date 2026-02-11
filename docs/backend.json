@@ -149,6 +149,10 @@
         "squawk": {
           "type": "number",
           "description": "The squawk code for the flight."
+        },
+        "landingFeesPaid": {
+          "type": "boolean",
+          "description": "Indicates if landing fees were paid for this flight."
         }
       },
       "required": [
