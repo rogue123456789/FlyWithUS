@@ -378,12 +378,12 @@ export default function FuelPage() {
       <PageHeader
         title={t('FuelPage.title')}
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              {t('FuelPage.export')}
-            </Button>
-            {userRole === 'admin' && (
+          userRole === 'admin' && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                {t('FuelPage.export')}
+              </Button>
               <Button
                 variant="destructive"
                 onClick={() => setIsClearDialogOpen(true)}
@@ -391,14 +391,14 @@ export default function FuelPage() {
                 <Trash2 className="mr-2 h-4 w-4" />
                 {t('FuelPage.clearAll')}
               </Button>
-            )}
-            <AddRefuelLogDialog onAddRefuelLog={handleAddRefuelLog} />
-            <AddFuelLogDialog
-              onAddFuelLog={handleAddFuelLog}
-              fuelLogs={sortedFuelLogs}
-              planes={planes ?? []}
-            />
-          </div>
+              <AddRefuelLogDialog onAddRefuelLog={handleAddRefuelLog} />
+              <AddFuelLogDialog
+                onAddFuelLog={handleAddFuelLog}
+                fuelLogs={sortedFuelLogs}
+                planes={planes ?? []}
+              />
+            </div>
+          )
         }
       />
 
@@ -419,9 +419,11 @@ export default function FuelPage() {
                 <TableHead>{t('FuelPage.tableStart')}</TableHead>
                 <TableHead>{t('FuelPage.tableDispensed')}</TableHead>
                 <TableHead>{t('FuelPage.tableLeftOver')}</TableHead>
-                <TableHead className="text-right">
-                  {t('FuelPage.tableActions')}
-                </TableHead>
+                {userRole === 'admin' && (
+                  <TableHead className="text-right">
+                    {t('FuelPage.tableActions')}
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -455,21 +457,23 @@ export default function FuelPage() {
                       : log.liters.toFixed(1)}
                   </TableCell>
                   <TableCell>{log.leftOverQuantity.toFixed(1)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          {t('FuelPage.edit')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  {userRole === 'admin' && (
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onSelect={() => setLogToEdit(log)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            {t('FuelPage.edit')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

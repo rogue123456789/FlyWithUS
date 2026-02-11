@@ -154,7 +154,7 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
       href: '/',
       label: t('Nav.dashboard'),
       icon: LayoutDashboard,
-      role: ['admin', 'open'],
+      role: ['admin'],
     },
     {
       href: '/flights',
@@ -172,7 +172,7 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
       href: '/employees',
       label: t('Nav.employees'),
       icon: Users,
-      role: ['admin'],
+      role: ['admin', 'open'],
     },
   ];
 
@@ -231,6 +231,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     null
   );
   const [isRoleLoading, setIsRoleLoading] = React.useState(true);
+  const isAppLoading = isUserLoading || isRoleLoading;
+  const isAuthReady = !isAppLoading && !!user && !!userRole;
 
   // This effect fetches the user's role ONCE when the user object becomes available.
   React.useEffect(() => {
@@ -276,39 +278,58 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // This effect handles page protection and redirection based on auth state.
   React.useEffect(() => {
-    if (isUserLoading || isRoleLoading) {
+    if (isAppLoading) {
       return; // Wait until all authentication checks are complete
     }
 
     const isAuthPage = pathname === '/login' || pathname === '/signup';
+    const isDashboard = pathname === '/';
 
+    // If not logged in, and not on an auth page, redirect to login.
     if (!user && !isAuthPage) {
       router.replace('/login');
-    } else if (user && isAuthPage) {
-      router.replace('/');
-    } else if (user && !userRole && !isAuthPage) {
+      return;
+    }
+
+    if (user) {
+      // If logged in and on an auth page, redirect based on role.
+      if (isAuthPage) {
+        if (userRole === 'admin') {
+          router.replace('/');
+        } else {
+          // Default redirect for 'open' users or if role is somehow not admin
+          router.replace('/flights');
+        }
+        return;
+      }
+
+      // If an 'open' user tries to access the dashboard, redirect them.
+      if (userRole === 'open' && isDashboard) {
+        router.replace('/flights');
+        return;
+      }
+
       // This is a critical safety net. If a user is authenticated but has no role,
       // something is wrong. Sign them out to force a clean login.
-      auth.signOut();
-      router.replace('/login');
+      if (!userRole && !isAuthPage) {
+        auth.signOut();
+        router.replace('/login');
+      }
     }
-  }, [user, isUserLoading, userRole, isRoleLoading, pathname, router, auth]);
+  }, [user, isAppLoading, userRole, pathname, router, auth]);
 
-  const isAppLoading = isUserLoading || isRoleLoading;
-  const isAuthReady = !isAppLoading && !!user && !!userRole;
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
-
-  // Show a loader while authentication is in progress.
-  if (isAppLoading) {
+  if (isAppLoading && !isAuthPage) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+  
+  if (isAuthPage) {
+    return <>{children}</>;
   }
 
   // If loading is finished but there's no valid user/role, show loader
