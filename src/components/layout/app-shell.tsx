@@ -172,20 +172,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Fetch both role documents in parallel.
   const adminRef = useMemoFirebase(() => user ? doc(firestore, 'roles_admin', user.uid) : null, [firestore, user]);
   const { data: adminRoleDoc, isLoading: isAdminLoading } = useDoc(adminRef);
 
-  // Only check for the 'open' role if the user is not an admin and the admin check is complete.
-  const openRef = useMemoFirebase(() => {
-    if (!user || isAdminLoading || adminRoleDoc) {
-      return null;
-    }
-    return doc(firestore, 'roles_open', user.uid);
-  }, [firestore, user, isAdminLoading, adminRoleDoc]);
+  const openRef = useMemoFirebase(() => user ? doc(firestore, 'roles_open', user.uid) : null, [firestore, user]);
   const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
+  // The roles are loading if the user is loading or if either of the role doc checks are loading.
   const isRoleLoading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
   
+  // Determine the role with clear priority. Admin always wins.
   const userRole = React.useMemo<'admin' | 'open' | null>(() => {
     if (adminRoleDoc) {
       return 'admin';
