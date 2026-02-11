@@ -243,7 +243,6 @@ export default function FlightsPage() {
           pilotName: newLogData.pilotName,
         }),
       });
-      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -317,7 +316,6 @@ export default function FlightsPage() {
       });
     } finally {
       setLogToEdit(null);
-      window.location.reload();
     }
   };
 
@@ -346,7 +344,6 @@ export default function FlightsPage() {
       });
     } finally {
       setLogToDelete(null);
-      window.location.reload();
     }
   };
 
@@ -391,7 +388,6 @@ export default function FlightsPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
-      window.location.reload();
     }
   };
 

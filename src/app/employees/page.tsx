@@ -194,7 +194,6 @@ export default function EmployeesPage() {
           }),
         });
       }
-      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -238,7 +237,6 @@ export default function EmployeesPage() {
           duration: formatDuration(duration),
         }),
       });
-      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -300,7 +298,6 @@ export default function EmployeesPage() {
       });
     } finally {
       setLogToEdit(null);
-      window.location.reload();
     }
   };
 
@@ -320,7 +317,6 @@ export default function EmployeesPage() {
       });
     } finally {
       setWorkLogToDelete(null);
-      window.location.reload();
     }
   };
 
@@ -350,7 +346,6 @@ export default function EmployeesPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
-      window.location.reload();
     }
   };
 

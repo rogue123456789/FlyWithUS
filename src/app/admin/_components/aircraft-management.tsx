@@ -103,7 +103,6 @@ export function AircraftManagement({ planes }: AircraftManagementProps) {
         });
       } finally {
         setPlaneToDelete(null);
-        window.location.reload();
       }
     }
   };

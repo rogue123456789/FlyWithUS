@@ -213,7 +213,6 @@ export default function LogbookPage() {
           logbookName: logbookName || logbookId,
         }),
       });
-      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -273,7 +272,6 @@ export default function LogbookPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
-      window.location.reload();
     }
   };
 

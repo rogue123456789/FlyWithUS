@@ -132,7 +132,6 @@ export default function PaymentsPage() {
         description: t('PaymentsPage.toastAddedDescription'),
       });
       setIsAddDialogOpen(false);
-      window.location.reload();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -160,7 +159,6 @@ export default function PaymentsPage() {
         });
       } finally {
         setPaymentToDelete(null);
-        window.location.reload();
       }
     }
   };
@@ -190,7 +188,6 @@ export default function PaymentsPage() {
       });
     } finally {
       setIsClearDialogOpen(false);
-      window.location.reload();
     }
   };
   const handleExport = () => {
