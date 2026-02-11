@@ -201,7 +201,7 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
         <Link href="/" className="flex items-center gap-2">
           <Logo className="h-7 w-7 text-primary" />
           <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden">
-            Skybound
+            FlyWithUS
           </span>
         </Link>
       </SidebarHeader>
@@ -370,7 +370,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="mb-4 flex items-center justify-between md:hidden">
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-7 w-7 text-primary" />
-            <span className="text-lg font-semibold">Skybound</span>
+            <span className="text-lg font-semibold">FlyWithUS</span>
           </Link>
           <SidebarTrigger />
         </header>

@@ -6,7 +6,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import { I18nProvider } from '@/context/i18n-context';
 
 export const metadata: Metadata = {
-  title: 'Skybound Manager',
+  title: 'FlyWithUS Manager',
   description: 'Flight school management made easy.',
 };
 

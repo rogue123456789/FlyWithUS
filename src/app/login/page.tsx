@@ -69,7 +69,7 @@ export default function LoginPage() {
     }
   };
 
-  const GUEST_EMAIL = 'guest@skybound.com';
+  const GUEST_EMAIL = 'guest@flywithus.com';
   const GUEST_PASSWORD = 'password';
 
   const handleGuestSignIn = async () => {
