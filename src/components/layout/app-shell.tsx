@@ -27,6 +27,7 @@ import {
   LogOut,
   LoaderCircle,
   Settings,
+  User as UserIcon,
 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import {
@@ -83,8 +84,14 @@ const UserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
             <span>Admin</span>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem>Profile</DropdownMenuItem>
-        <DropdownMenuItem>Settings</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => router.push('/profile')}>
+          <UserIcon className="mr-2 h-4 w-4" />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => router.push('/settings')}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Settings</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
@@ -123,8 +130,14 @@ const CollapsedUserMenu = ({ userRole }: { userRole: 'admin' | 'open' | null }) 
             <span>Admin</span>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem>Profile</DropdownMenuItem>
-        <DropdownMenuItem>Settings</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => router.push('/profile')}>
+          <UserIcon className="mr-2 h-4 w-4" />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => router.push('/settings')}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Settings</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
@@ -197,16 +210,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     const loading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
     
-    if (!loading) {
-      if (adminRoleDoc) {
-        setUserRole('admin');
-      } else if (openRoleDoc) {
-        setUserRole('open');
-      } else {
-        setUserRole(null); 
-      }
-      setIsRoleLoading(false);
+    if (loading) {
+      setIsRoleLoading(true);
+      return;
+    };
+
+    if (adminRoleDoc) {
+      setUserRole('admin');
+    } else if (openRoleDoc) {
+      setUserRole('open');
+    } else {
+      setUserRole(null); 
     }
+    setIsRoleLoading(false);
   }, [isUserLoading, isAdminLoading, isOpenLoading, adminRoleDoc, openRoleDoc, user]);
 
   React.useEffect(() => {
