@@ -28,6 +28,13 @@ type RoleUser = {
   email: string;
 };
 
+type UserWithRole = {
+  id: string;
+  email: string;
+  username: string;
+  role: 'admin' | 'open';
+};
+
 export default function AdminPage() {
   const firestore = useFirestore();
   const { t } = useI18n();
@@ -81,19 +88,27 @@ export default function AdminPage() {
     useCollection<Employee>(employeesCollection);
 
   const allUsers = React.useMemo(() => {
-    const usersMap = new Map();
+    const usersMap = new Map<string, UserWithRole>();
 
+    // Add all admin users. The 'admin' role takes precedence.
     adminUsers?.forEach((user) => {
-      if (usersMap.has(user.id)) {
-        usersMap.set(user.id, { ...usersMap.get(user.id), role: 'admin' });
-      } else {
-        usersMap.set(user.id, { ...user, role: 'admin' });
-      }
+      usersMap.set(user.id, {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: 'admin',
+      });
     });
 
+    // Add open users only if they are not already in the map as an admin.
     openUsers?.forEach((user) => {
       if (!usersMap.has(user.id)) {
-        usersMap.set(user.id, { ...user, role: 'open' });
+        usersMap.set(user.id, {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: 'open',
+        });
       }
     });
 
