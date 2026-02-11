@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import type { Logbook, LogbookEntry } from '@/lib/types';
-import { PlusCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { AddLogbookEntryForm } from './_components/add-logbook-entry-form';
 import {
   Dialog,
@@ -42,10 +42,7 @@ import {
   doc,
   addDoc,
   updateDoc,
-  setDoc,
   increment,
-  writeBatch,
-  deleteDoc,
 } from 'firebase/firestore';
 import { useI18n } from '@/context/i18n-context';
 import { useAuthReady } from '@/context/auth-ready-context';
@@ -115,6 +112,15 @@ export default function LogbookPage() {
   );
   const { data: logbooks } = useCollection<Logbook>(logbooksCollection);
 
+  const getLogbookName = React.useCallback(
+    (logbookId: string) => {
+      if (!logbooks) return logbookId;
+      const logbook = logbooks.find((lb) => lb.id === logbookId);
+      return logbook?.name || logbookId;
+    },
+    [logbooks]
+  );
+
   const handleAddLogbookEntry = async (newEntryData: any) => {
     if (!firestore) return;
     try {
@@ -173,14 +179,13 @@ export default function LogbookPage() {
       });
     }
   };
-  
+
   const sortedLogbookEntries = React.useMemo(() => {
     if (!logbookEntries) return [];
     return [...logbookEntries].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, [logbookEntries]);
-
 
   return (
     <div className="flex flex-col gap-8">
@@ -222,11 +227,11 @@ export default function LogbookPage() {
                   <TableCell>
                     {format(parseISO(log.date), 'MMM d, yyyy')}
                   </TableCell>
-                  <TableCell>{log.logbookId}</TableCell>
+                  <TableCell>{getLogbookName(log.logbookId)}</TableCell>
                   <TableCell>{log.startLocation}</TableCell>
                   <TableCell>{log.endLocation}</TableCell>
                   <TableCell>{log.duration.toFixed(1)}h</TableCell>
-                   <TableCell>{log.batteryStatus}</TableCell>
+                  <TableCell>{log.batteryStatus}</TableCell>
                   <TableCell>{log.oilPressure}</TableCell>
                   <TableCell>{log.oilTemp}</TableCell>
                   <TableCell>{log.waterTemp}</TableCell>
