@@ -10,23 +10,31 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { UserManagement } from './_components/user-management';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 export default function AdminPage() {
   const firestore = useFirestore();
 
+  const adminUsersCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'roles_admin') : null),
+    [firestore]
+  );
   const {
     data: adminUsers,
     isLoading: isAdminLoading,
     error: adminError,
-  } = useCollection(collection(firestore, 'roles_admin'));
-  
+  } = useCollection(adminUsersCollection);
+
+  const openUsersCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'roles_open') : null),
+    [firestore]
+  );
   const {
     data: openUsers,
     isLoading: isOpenLoading,
     error: openError,
-  } = useCollection(collection(firestore, 'roles_open'));
+  } = useCollection(openUsersCollection);
 
   const allUsers = React.useMemo(() => {
     const usersMap = new Map();
