@@ -173,16 +173,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const adminRef = useMemoFirebase(() => user ? doc(firestore, 'roles_admin', user.uid) : null, [firestore, user]);
-  const openRef = useMemoFirebase(() => user ? doc(firestore, 'roles_open', user.uid) : null, [firestore, user]);
-  
   const { data: adminRoleDoc, isLoading: isAdminLoading } = useDoc(adminRef);
+
+  // Only check for the 'open' role if the user is not an admin and the admin check is complete.
+  const openRef = useMemoFirebase(() => {
+    if (!user || isAdminLoading || adminRoleDoc) {
+      return null;
+    }
+    return doc(firestore, 'roles_open', user.uid);
+  }, [firestore, user, isAdminLoading, adminRoleDoc]);
   const { data: openRoleDoc, isLoading: isOpenLoading } = useDoc(openRef);
 
   const isRoleLoading = isUserLoading || (user && (isAdminLoading || isOpenLoading));
-
+  
   const userRole = React.useMemo<'admin' | 'open' | null>(() => {
-    if (isRoleLoading) return null;
-
     if (adminRoleDoc) {
       return 'admin';
     }
@@ -190,7 +194,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return 'open';
     }
     return null;
-  }, [isRoleLoading, adminRoleDoc, openRoleDoc]);
+  }, [adminRoleDoc, openRoleDoc]);
 
 
   React.useEffect(() => {
