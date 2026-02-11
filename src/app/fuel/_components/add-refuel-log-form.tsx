@@ -38,11 +38,14 @@ export function AddRefuelLogForm({ onFormSubmit }: AddRefuelLogFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date().toISOString().slice(0, 10),
       litersRefueled: 100,
       cost: 200,
     },
   });
+
+  React.useEffect(() => {
+    form.setValue('date', new Date().toISOString().slice(0, 10));
+  }, [form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     toast({

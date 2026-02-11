@@ -84,10 +84,9 @@ export function AddFuelLogForm({
   const { t } = useI18n();
   const formSchema = getFormSchema(t);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<z.infer<ReturnType<typeof formSchema>>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date().toISOString().slice(0, 10),
       customerType: 'Company',
       startQuantity: 100,
       liters: 10,
@@ -104,6 +103,9 @@ export function AddFuelLogForm({
     React.useState(false);
 
   React.useEffect(() => {
+    // Set default date on client-side to avoid hydration mismatch
+    form.setValue('date', new Date().toISOString().slice(0, 10));
+
     // Since there is one giant fuel tank, the start quantity is always the
     // leftover quantity from the last transaction, regardless of the plane.
     const sortedLogs = [...fuelLogs].sort(
@@ -118,7 +120,7 @@ export function AddFuelLogForm({
       form.setValue('startQuantity', 100);
       setIsStartQuantityReadOnly(false);
     }
-  }, [fuelLogs, form.setValue]);
+  }, [fuelLogs, form]);
 
   const leftOverQuantity = React.useMemo(() => {
     const start = Number(startQuantity);

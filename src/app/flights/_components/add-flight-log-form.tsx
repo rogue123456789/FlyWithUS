@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -87,8 +88,6 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      // @ts-ignore
-      date: new Date().toISOString().slice(0, 10),
       pilotName: '',
       flightDuration: 0.1,
       takeoffLocation: '',
@@ -97,6 +96,10 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
       aircraftSelection: 'existing',
     },
   });
+
+  React.useEffect(() => {
+    form.setValue('date', new Date());
+  }, [form]);
 
   const aircraftSelection = form.watch('aircraftSelection');
 
@@ -124,7 +127,7 @@ export function AddFlightLogForm({ planes, onSubmit }: AddFlightLogFormProps) {
                   value={
                     field.value instanceof Date
                       ? field.value.toISOString().slice(0, 10)
-                      : field.value
+                      : ''
                   }
                 />
               </FormControl>
