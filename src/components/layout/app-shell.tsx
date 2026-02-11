@@ -36,7 +36,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import {
+  useUser,
+  useAuth,
+  useFirestore,
+  useDoc,
+  useMemoFirebase,
+} from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '../ui/button';
 import { useI18n } from '@/context/i18n-context';
@@ -147,10 +153,30 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
   const { t } = useI18n();
 
   const allNavItems = [
-    { href: '/', label: t('Nav.dashboard'), icon: LayoutDashboard, role: ['admin', 'open'] },
-    { href: '/flights', label: t('Nav.flights'), icon: Plane, role: ['admin', 'open'] },
-    { href: '/fuel', label: t('Nav.fuel'), icon: Fuel, role: ['admin', 'open'] },
-    { href: '/employees', label: t('Nav.employees'), icon: Users, role: ['admin'] },
+    {
+      href: '/',
+      label: t('Nav.dashboard'),
+      icon: LayoutDashboard,
+      role: ['admin', 'open'],
+    },
+    {
+      href: '/flights',
+      label: t('Nav.flights'),
+      icon: Plane,
+      role: ['admin', 'open'],
+    },
+    {
+      href: '/fuel',
+      label: t('Nav.fuel'),
+      icon: Fuel,
+      role: ['admin', 'open'],
+    },
+    {
+      href: '/employees',
+      label: t('Nav.employees'),
+      icon: Users,
+      role: ['admin'],
+    },
   ];
 
   const navItems = React.useMemo(() => {
@@ -199,6 +225,7 @@ const AppSidebar = ({ userRole }: { userRole: 'admin' | 'open' | null }) => {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const firestore = useFirestore();
   const pathname = usePathname();
   const router = useRouter();
@@ -232,13 +259,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const rolesAreLoading = isAdminLoading || isOpenLoading;
-    if (rolesAreLoading) {
+    if (isAdminLoading || isOpenLoading) {
       setIsRoleLoading(true);
       return;
     }
 
-    // Role checks are complete.
     if (adminRoleDoc) {
       setUserRole('admin');
     } else if (openRoleDoc) {
@@ -246,10 +271,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } else {
       setUserRole(null);
     }
-    // Loading is finished regardless of whether a role was found.
     setIsRoleLoading(false);
-  }, [user, isUserLoading, adminRoleDoc, openRoleDoc, isAdminLoading, isOpenLoading]);
-
+  }, [
+    user,
+    isUserLoading,
+    adminRoleDoc,
+    openRoleDoc,
+    isAdminLoading,
+    isOpenLoading,
+  ]);
 
   React.useEffect(() => {
     if (isUserLoading || isRoleLoading) return;
@@ -260,10 +290,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       router.replace('/login');
     } else if (user && isAuthPage) {
       router.replace('/');
+    } else if (user && !userRole && !isAuthPage) {
+      auth.signOut();
+      router.replace('/login');
     }
-  }, [user, isUserLoading, isRoleLoading, pathname, router]);
+  }, [user, isUserLoading, isRoleLoading, userRole, pathname, router, auth]);
 
-  const showLoadingSpinner = (isUserLoading || isRoleLoading) && pathname !== '/login' && pathname !== '/signup';
+  const isLoading = isUserLoading || isRoleLoading;
+  const showLoadingSpinner =
+    isLoading && pathname !== '/login' && pathname !== '/signup';
 
   if (showLoadingSpinner) {
     return (
@@ -274,7 +309,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
-  if (isAuthPage) {
+  if (isAuthPage || !user) {
     return <>{children}</>;
   }
 
