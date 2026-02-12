@@ -1,7 +1,5 @@
 'use client';
 
-const x: string = 123; // Deliberate error for build diagnostics
-
 import * as React from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
